@@ -23,8 +23,20 @@ It does not paste photos on as textures. The agent reads dimensions from point-c
 | Blender and Blender MCP | yes | modelling and rendering |
 | Python 3 with `numpy` and `Pillow` | yes | analysis scripts |
 | SfM result in COLMAP format (`cameras` / `images` / `points3D`, plus the photos) | yes | poses, photos, points. Results from other SfM software work once exported to COLMAP format |
+| [360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html) | optional (recommended for 360° cameras) | converts a Metashape spherical SfM result into the COLMAP-format cubemap dataset this skill reads (`cameras.txt` / `images.txt` / `points3D.txt`, six face images) plus `dense.ply` |
 | LichtFeld Studio and its MCP | optional | referring to a 3D Gaussian Splatting scene |
 | Unreal Engine and its MCP | optional | porting to a game engine |
+
+## Preparing the input (360° camera)
+
+The examples were prepared like this:
+
+1. Walk through the site with a 360° camera (for example a DJI OSMO360)
+2. Align the equirectangular images in Metashape and build the dense point cloud
+3. Use **[360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html)** to unfold the spherical result into six cubemap face images with COLMAP-format camera poses, and to write the dense cloud as `dense.ply`
+4. Give the resulting folder to this skill as its input (`SFM_DIR`)
+
+360 MCConverter is a tool made by the author of this skill (distributed on BOOTH; the page is in Japanese with an English switch). If you can prepare COLMAP-format data another way, the skill works without it.
 
 ## Install
 
@@ -82,7 +94,7 @@ The Japanese editions are in [README.ja.md](README.ja.md#記事と作例).
 
 The skill describes how to use the following, but none of them is included. Get them separately and follow their terms.
 
-- [Blender](https://www.blender.org/), [LichtFeld Studio](https://github.com/MrNeRF/LichtFeld-Studio), [COLMAP](https://colmap.github.io/), Unreal Engine
+- [Blender](https://www.blender.org/), Metashape, [360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html), [LichtFeld Studio](https://github.com/MrNeRF/LichtFeld-Studio), [COLMAP](https://colmap.github.io/), Unreal Engine
 - [Poly Haven](https://polyhaven.com/) textures, plant assets for Unreal Engine
 - [GSI elevation tiles](https://maps.gsi.go.jp/development/ichiran.html) (Geospatial Information Authority of Japan; attribution is required when you use them)
 

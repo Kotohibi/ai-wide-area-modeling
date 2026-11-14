@@ -23,8 +23,20 @@
 | Blender と Blender MCP | 必須 | モデリング・レンダリング |
 | Python 3 と `numpy`・`Pillow` | 必須 | 解析スクリプト |
 | COLMAP 形式の SfM 結果（`cameras` / `images` / `points3D`、写真） | 必須 | カメラ姿勢・写真・点群。他の SfM ソフトの結果も、COLMAP 形式に書き出せば使えます |
+| [360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html) | 任意（360°カメラで撮る場合に推奨） | Metashape の全天球 SfM 結果を、このスキルが読む COLMAP 形式の cubemap データセット（`cameras.txt` / `images.txt` / `points3D.txt`、6 面の写真）と `dense.ply` に変換 |
 | LichtFeld Studio と、その MCP | 任意 | 3D Gaussian Splatting を参照するとき |
 | Unreal Engine と、その MCP | 任意 | ゲームエンジンへ移すとき |
+
+## 入力データの作り方（360°カメラの場合）
+
+参考事例は、次の流れで入力データを作っています。
+
+1. 360°カメラ（例: DJI OSMO360）で、対象の中を歩いて撮る
+2. Metashape で、全天球画像のままアラインメントし、高密度点群を作る
+3. **[360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html)** で、全天球の結果を cubemap 6 面の写真と COLMAP 形式のカメラ姿勢に展開し、高密度点群を `dense.ply` として書き出す
+4. できたフォルダを、このスキルの入力（`SFM_DIR`）にする
+
+360 MCConverter は、このスキルの作者が作っているツールです（BOOTH で配布）。COLMAP 形式のデータを別の方法で用意できる場合は、無くても使えます。
 
 ## 入れ方
 
@@ -82,7 +94,7 @@ Claude Code で、たとえば次のように頼むと使われます。
 
 このスキルは、次の物の使い方に触れていますが、いずれも同梱していません。別途入手し、それぞれの利用規約に従ってください。
 
-- [Blender](https://www.blender.org/)、[LichtFeld Studio](https://github.com/MrNeRF/LichtFeld-Studio)、[COLMAP](https://colmap.github.io/)、Unreal Engine
+- [Blender](https://www.blender.org/)、Metashape、[360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html)、[LichtFeld Studio](https://github.com/MrNeRF/LichtFeld-Studio)、[COLMAP](https://colmap.github.io/)、Unreal Engine
 - [Poly Haven](https://polyhaven.com/) のテクスチャ、Unreal Engine 用の植物アセット
 - [国土地理院の標高タイル](https://maps.gsi.go.jp/development/ichiran.html)（利用するときは出典の明記が必要です）
 
