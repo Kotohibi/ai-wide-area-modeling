@@ -23,7 +23,7 @@
 | Blender と Blender MCP | 必須 | モデリング・レンダリング |
 | Python 3 と `numpy`・`Pillow` | 必須 | 解析スクリプト |
 | COLMAP 形式の SfM 結果（`cameras` / `images` / `points3D`、写真） | 必須 | カメラ姿勢・写真・点群。他の SfM ソフトの結果も、COLMAP 形式に書き出せば使えます |
-| [360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html) | 任意（360°カメラで撮る場合に推奨） | Metashape の全天球 SfM 結果を、このスキルが読む COLMAP 形式の cubemap データセット（`cameras.txt` / `images.txt` / `points3D.txt`、6 面の写真）と `dense.ply` に変換 |
+| [360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html) | 360°カメラで撮る場合は必須 | Metashape の全天球 SfM 結果を、このスキルが読む COLMAP 形式の cubemap データセット（`cameras.txt` / `images.txt` / `points3D.txt`、6 面の写真）と `dense.ply` に変換 |
 | LichtFeld Studio と、その MCP | 任意 | 3D Gaussian Splatting を参照するとき |
 | Unreal Engine と、その MCP | 任意 | ゲームエンジンへ移すとき |
 
@@ -36,7 +36,7 @@
 3. **[360 MCConverter](https://kotohibi.f5.si/360/mcconverter.html)** で、全天球の結果を cubemap 6 面の写真と COLMAP 形式のカメラ姿勢に展開し、高密度点群を `dense.ply` として書き出す
 4. できたフォルダを、このスキルの入力（`SFM_DIR`）にする
 
-360 MCConverter は、このスキルの作者が作っているツールです（BOOTH で配布）。COLMAP 形式のデータを別の方法で用意できる場合は、無くても使えます。
+360 MCConverter は、このスキルの作者が作っているツールです（BOOTH で配布）。このスキルは cubemap 6 面に展開した写真を読むので、360°カメラで撮る場合はこの変換が必要です。
 
 ## 入れ方
 
