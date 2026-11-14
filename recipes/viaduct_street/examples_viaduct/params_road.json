@@ -1,0 +1,28 @@
+{
+  "S": 1.6,
+  "sections": [
+    {"s0": 88, "s1": 245, "elems": [
+      {"type": "sidewalk", "l0": -4.0, "l1": 0.3},
+      {"type": "road", "l0": 0.3, "l1": 7.3, "lines": [[0.75, "solid"], [2.95, "dashed"], [5.1, "solid"]]},
+      {"type": "median", "l0": 7.3, "l1": 9.7},
+      {"type": "road", "l0": 9.7, "l1": 13.9, "lines": [[9.95, "solid"], [11.8, "dashed"], [13.65, "solid"]]},
+      {"type": "sidewalk", "l0": 13.9, "l1": 17.0}]},
+    {"s0": 245, "s1": 446, "elems": [
+      {"type": "sidewalk", "l0": -4.0, "l1": 0.3},
+      {"type": "sidewalk", "l0": 0.3, "l1": 3.4},
+      {"type": "road", "l0": 3.4, "l1": 7.8, "lines": [[3.65, "solid"], [5.6, "dashed"], [7.55, "solid"]]},
+      {"type": "median", "l0": 7.8, "l1": 10.2},
+      {"type": "road", "l0": 10.2, "l1": 14.4, "lines": [[10.45, "solid"], [12.3, "dashed"], [14.15, "solid"]]},
+      {"type": "sidewalk", "l0": 14.4, "l1": 17.5}]}
+  ],
+  "openings": [
+    {"s0": 131, "s1": 162, "types": ["median"], "fill": [0.3, 13.9]},
+    {"s0": 141.7, "s1": 151.5, "types": ["sidewalk"], "side": "left", "fill": [-4.0, 0.3]},
+    {"s0": 380, "s1": 390, "types": ["sidewalk"], "side": "left", "fill": [-4.0, 0.3]}
+  ],
+  "side_streets": [
+    {"s0": 141.7, "s1": 151.5, "l0": 0.3, "l1": -30, "lines": [["center", "double"]]},
+    {"s0": 380, "s1": 390, "l0": 0.3, "l1": -22}
+  ],
+  "skip_lines": [[131, 162], [378, 392]]
+}

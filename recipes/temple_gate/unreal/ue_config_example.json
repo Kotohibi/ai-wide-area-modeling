@@ -1,0 +1,12 @@
+{
+ "name": "Temple",
+ "export_dir": "<project_dir>/ue_export",
+ "polyhaven_dir": "<project_dir>/polyhaven",
+ "skip_groups": ["SM_Temple_Planting"],
+ "no_shadow": ["SM_Temple_Ground"],
+ "game_mode": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode.BP_ThirdPersonGameMode_C",
+ "player_start": [1.4, -26.0, 1.2, -90],
+ "veg_kinds": {"bare_big": ["Hornbeam_A", "Hornbeam_B"], "bare": ["European_Beech_B", "English_Oak_C", "Norway_Maple_B", "Hornbeam_C"],
+               "conifer": ["Norway_Spruce_C", "Norway_Spruce_B"], "topiary": ["Baltic_Pine_D", "Baltic_Pine_C"],
+               "round": ["Common_Hazel_A", "Common_Hazel_B"], "hedge": ["Greasewood_A", "Greasewood_B", "Greasewood_C"]}
+}

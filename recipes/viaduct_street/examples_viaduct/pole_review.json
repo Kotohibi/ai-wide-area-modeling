@@ -1,0 +1,190 @@
+{
+    "default":  "light",
+    "default_light_h":  3.8,
+    "items":  {
+                  "30":  {
+                             "type":  "sign",
+                             "kind":  "guide_blue",
+                             "face":  180,
+                             "h":  2.6
+                         },
+                  "62":  {
+                             "type":  "sign",
+                             "kind":  "round_white",
+                             "face":  0,
+                             "h":  1.2,
+                             "size":  0.5
+                         },
+                  "23":  {
+                             "type":  "signal",
+                             "face":  0,
+                             "arm":  2.6,
+                             "ped":  true,
+                             "ped_face":  90
+                         },
+                  "43":  {
+                             "type":  "signal",
+                             "face":  90,
+                             "arm_dir":  90,
+                             "arm":  2.0,
+                             "ped":  true,
+                             "ped_face":  90,
+                             "extra":  [
+                                           {
+                                               "kind":  "round_blue",
+                                               "face":  -90,
+                                               "h":  1.9
+                                           }
+                                       ]
+                         },
+                  "21":  {
+                             "type":  "signal",
+                             "face":  180,
+                             "arm_dir":  -90,
+                             "arm":  2.6,
+                             "ped":  true,
+                             "ped_face":  -90
+                         },
+                  "18":  {
+                             "type":  "signal",
+                             "face":  180,
+                             "arm_dir":  -90,
+                             "arm":  2.6,
+                             "extra":  [
+                                           {
+                                               "kind":  "round_blue",
+                                               "face":  0,
+                                               "h":  1.7
+                                           }
+                                       ]
+                         },
+                  "28":  {
+                             "type":  "signal",
+                             "face":  180,
+                             "arm":  2.6,
+                             "ped":  true,
+                             "ped_face":  -90,
+                             "extra":  [
+                                           {
+                                               "kind":  "round_blue",
+                                               "face":  180,
+                                               "h":  1.9
+                                           }
+                                       ]
+                         },
+                  "55":  {
+                             "type":  "sign",
+                             "kind":  "round_red",
+                             "face":  90,
+                             "h":  1.5,
+                             "extra":  [
+                                           {
+                                               "kind":  "round_blue",
+                                               "face":  180,
+                                               "h":  1.0
+                                           }
+                                       ]
+                         },
+                  "25":  {
+                             "type":  "sign",
+                             "kind":  "round_blue",
+                             "face":  180,
+                             "h":  1.4
+                         },
+                  "42":  {
+                             "type":  "signal",
+                             "face":  90,
+                             "arm_dir":  -90,
+                             "arm":  3.2,
+                             "extra":  [
+                                           {
+                                               "kind":  "round_blue",
+                                               "face":  90,
+                                               "h":  2.0
+                                           }
+                                       ]
+                         },
+                  "7":  {
+                            "type":  "light",
+                            "h":  5.5
+                        },
+                  "0":  {
+                            "type":  "drop"
+                        },
+                  "1":  {
+                            "type":  "drop"
+                        },
+                  "2":  {
+                            "type":  "drop"
+                        },
+                  "3":  {
+                            "type":  "drop"
+                        },
+                  "4":  {
+                            "type":  "drop"
+                        },
+                  "5":  {
+                            "type":  "drop"
+                        },
+                  "6":  {
+                            "type":  "drop"
+                        },
+                  "8":  {
+                            "type":  "drop"
+                        },
+                  "9":  {
+                            "type":  "drop"
+                        },
+                  "11":  {
+                             "type":  "drop"
+                         },
+                  "12":  {
+                             "type":  "drop"
+                         },
+                  "16":  {
+                             "type":  "drop"
+                         },
+                  "19":  {
+                             "type":  "drop"
+                         },
+                  "41":  {
+                             "type":  "drop"
+                         },
+                  "48":  {
+                             "type":  "drop"
+                         },
+                  "52":  {
+                             "type":  "drop"
+                         },
+                  "65":  {
+                             "type":  "drop"
+                         },
+                  "10":  {
+                             "type":  "drop"
+                         }
+              },
+    "add":  [
+                {
+                    "id":  "A_s142",
+                    "x":  4.05,
+                    "y":  32.8,
+                    "type":  "signal",
+                    "face":  -90,
+                    "arm_dir":  0,
+                    "arm":  2.4,
+                    "ped":  true,
+                    "ped_face":  0
+                },
+                {
+                    "id":  "B_s151",
+                    "x":  4.18,
+                    "y":  24.69,
+                    "type":  "signal",
+                    "face":  -90,
+                    "arm_dir":  180,
+                    "arm":  2.4,
+                    "ped":  true,
+                    "ped_face":  180
+                }
+            ]
+}

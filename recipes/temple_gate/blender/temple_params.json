@@ -1,0 +1,35 @@
+{
+ "_note": "Model frame (project.json): metres, Z up, ground z=0. Gate local coords u=x-cx, v=y-cy (v<0 = front/south, facing the approach). Measured from SfM slices (plan_z*.png, side_mid.png, front_face.png) at scale 1.23 m/unit.",
+ "gate": {
+  "center": [1.15, 23.95],
+  "platform": {"hu": 5.15, "hv": 3.6, "h": 0.45},
+  "pillars_u": [-3.68, -1.28, 1.28, 3.68],
+  "pillars_v": [-2.1, 0.0, 2.1],
+  "pillar_r": 0.21,
+  "pillar_top": 3.35,
+  "nemaki_h": 0.5,
+  "lower": {"hiraki_z": [1.15, 1.3], "tobinuki_z": [2.35, 2.55], "kashira_z": [3.05, 3.35], "bracket_z": [3.35, 3.85],
+            "fence_z": [0.55, 2.05], "fence_pitch": 0.12, "ceiling_z": 3.85},
+  "pent_roof": {"hu": 5.6, "hv": 4.1, "z_eave": 4.05, "inner_hu": 3.6, "inner_hv": 2.15, "z_top": 4.85, "p": 1.3,
+                "rise": 0.3, "thick": 0.22, "rafter_len": 1.3},
+  "balcony": {"hu": 3.6, "hv": 2.15, "z": 4.85, "t": 0.12, "rail_hu": 3.45, "rail_hv": 2.0, "rail_h": 0.85},
+  "upper": {"pillars_u": [-2.75, -1.15, 1.15, 2.75], "pillars_v": [-1.5, 0.0, 1.5], "pillar_r": 0.16,
+            "z0": 4.97, "z1": 6.65, "kashira_z": [6.45, 6.65], "bracket_z": [6.65, 7.3], "keta_u": 4.15, "keta_v": 2.9},
+  "roof": {"hu": 5.35, "hv": 3.9, "z_eave": 7.6, "z_ridge": 10.2, "gable_u": 3.75, "p": 1.35, "rise": 0.55,
+           "thick": 0.28, "rafter_len": 1.4, "ridge_u": 4.15, "ridge_h": 0.4, "oni_h": 0.55},
+  "plaque": {"w": 1.7, "h": 0.65, "z": 6.95},
+  "gutter": {"v0": -4.25, "v1": -3.6, "z": -0.12},
+  "bridge": {"hu": 1.35, "z": 0.18},
+  "bollards_u": [-1.6, 1.6], "bollard_v": -4.45, "bollard_h": 0.85, "bollard_r": 0.13
+ },
+ "walls": [
+  {"p0": [-5.4, 12.5], "p1": [-5.4, 30.0], "h": 1.9, "t": 0.35},
+  {"p0": [-8.0, 12.5], "p1": [-5.4, 12.5], "h": 1.9, "t": 0.35},
+  {"p0": [-16.5, 26.6], "p1": [-6.3, 26.6], "h": 1.9, "t": 0.35},
+  {"p0": [21.5, 10.0], "p1": [21.5, 38.0], "h": 1.2, "t": 0.25}
+ ],
+ "hedges": [
+  {"p0": [5.1, 29.0], "p1": [5.1, 42.5], "h": 1.3, "t": 0.9}
+ ],
+ "ground": {"x": [-400, 400], "y": [-400, 400]}
+}
