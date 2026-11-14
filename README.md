@@ -72,7 +72,9 @@ The Japanese editions are in [README.ja.md](README.ja.md#記事と作例).
 ## Notes
 
 - **The scale is an estimate.** SfM and 3DGS have no absolute scale, so it is set from known dimensions (stair riser, camera height, lane width and so on). Always report the basis and the error with the result.
+- `recipes/` records real examples; it does not limit what you can model. Scene types without a recipe are built with the procedure in `SKILL.md` alone.
 - The scripts under `recipes/` come from real projects and contain project-specific constants. Change the values before reusing them.
+- The table of scale clues in `references/knowledge.md` gives values for Japan. Check against local standards elsewhere.
 - This repository contains no capture data, 3D models or assets.
 - The documents and the comments in the scripts are mostly in Japanese.
 

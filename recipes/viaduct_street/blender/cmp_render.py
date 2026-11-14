@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import bpy, json, math
 from mathutils import Matrix, Vector
 import os; SH = os.environ.get("BLENDER_SHARED", "")

@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 r"""Crop every detected pole (poles.json) out of the training photos, seen from both directions along the route.
 
 usage: python sign_views.py <scratch_dir> <out_prefix> [per_sheet=16] [tile=220] [ids=3,18,28] [quad]

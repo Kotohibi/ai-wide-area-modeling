@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Turn hand-picked building outlines (pixels on bld_overlay.png from buildings.py) into building records.
 
 usage: python manual_buildings.py <scratch_dir> <spec.json> [scale_px_per_unit=3]

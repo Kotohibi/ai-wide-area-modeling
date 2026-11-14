@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Placeholder trees in UE from the PCG sample meshes, at the measured tree positions/sizes in site_params.json
 (site trees + approach trees). Outliner folder Temple/Trees_Placeholder; re-runnable (removes its own actors).
 Hedges and shrub balls are not placed (no fitting mesh). Swap for real foliage assets later."""

@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, json
 from PIL import Image, ImageDraw
 import os; SH = os.environ.get("BLENDER_SHARED", "")

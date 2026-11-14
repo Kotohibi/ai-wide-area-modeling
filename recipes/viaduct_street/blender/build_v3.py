@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import bpy, bmesh, json, math, os
 import numpy as np
 

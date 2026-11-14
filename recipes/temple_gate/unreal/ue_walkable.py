@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Make L_Temple walkable in PIE: complex-as-simple collision on every Temple mesh, the level's GameMode override
 set to BP_ThirdPersonGameMode, PlayerStart at the entrance facing the gate."""
 import sys, json

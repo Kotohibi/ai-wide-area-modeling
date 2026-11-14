@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, json, zlib, struct, math, numpy as np
 SP = sys.argv[1]; import os; SH = os.environ.get("BLENDER_SHARED", "")
 m = json.load(open(SH + r"\ortho_photo_meta.json")); P = np.array(json.load(open(SH + r"\path_level.json"))["path"])

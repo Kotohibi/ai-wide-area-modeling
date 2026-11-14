@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, numpy as np
 SP = sys.argv[1]
 M = np.array([[0.965509831905365, 0.26036858558654785, 0], [0.26036858558654785, -0.965509831905365, 0], [0, 0, -1]], np.float32)

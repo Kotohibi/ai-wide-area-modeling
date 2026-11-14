@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 r"""Draw the detected poles (pole_index.json, with ids) and the modelled furniture facing into training photos.
 
 usage: python overlay_poles.py <scratch_dir> <out.png> <tile> name1.png name2.png ...

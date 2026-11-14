@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, json, numpy as np
 SP = sys.argv[1]
 s_lo, s_hi = float(sys.argv[2]), float(sys.argv[3])

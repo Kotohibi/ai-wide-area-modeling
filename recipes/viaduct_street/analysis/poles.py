@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, json, math, numpy as np
 SP = sys.argv[1]; import os; SH = os.environ.get("BLENDER_SHARED", "")
 L = np.load(SP + r"\lP.npy"); C = np.load(SP + r"\lC.npy")

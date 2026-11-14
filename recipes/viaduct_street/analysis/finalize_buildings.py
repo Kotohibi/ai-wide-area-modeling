@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Post-process detected building boxes (buildings.py -> buildings_final2.json).
 
 1. Thicken thin boxes (only the facade is reconstructed) away from the route.

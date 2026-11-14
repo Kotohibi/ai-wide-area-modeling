@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 r"""Find thin dark vertical poles (traffic-signal / sign posts) in the dense 3DGS, which the sparse SfM cloud misses.
 
 usage: python dark_poles.py <scratch_dir> <s0> <s1> <lat0> <lat1> [max_lum=0.33]

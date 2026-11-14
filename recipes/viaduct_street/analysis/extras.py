@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Detect transmission towers, utility poles and trees from the leveled sparse cloud (lP.npy / lC.npy).
 
 usage: python extras.py <scratch_dir>

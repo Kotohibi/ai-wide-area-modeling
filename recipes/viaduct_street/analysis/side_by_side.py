@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Put two images side by side at the same height with labels (e.g. LFS capture vs Blender render).
 
 usage: python side_by_side.py <left.png> <right.png> <out.png> [height=900] [label_left] [label_right]

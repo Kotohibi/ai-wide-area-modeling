@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, zlib, struct, numpy as np
 def save_png(path, a):
     h, w, _ = a.shape

@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Detect longitudinal road markings (solid / dashed lines) on the route-straightened orthophoto.
 
 usage: python detect_lines.py <scratch_dir> <s0> <s1> <lat0> <lat1> [exclude s-ranges like 131-161,376-390]

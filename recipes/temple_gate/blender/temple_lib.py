@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Shared Blender helpers for the the temple model: materials, a multi-material mesh builder in a local (rotated)
 frame, roof height fields (irimoya / hip / pent / lean-to) and small parametric parts (trees, shrubs, hedges).
 Load inside Blender with exec(...) before build_site.py."""

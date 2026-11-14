@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Build the the temple two-storey gate (rōmon) and its surroundings in Blender from temple_params.json.
 Run inside Blender:  exec(compile(open(p, encoding="utf-8").read(), p, "exec"), globals())
 Deletes and rebuilds its own collections (Temple_*), so edit the JSON and re-run."""

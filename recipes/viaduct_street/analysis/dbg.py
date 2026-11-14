@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, json, numpy as np
 SP = sys.argv[1]; SH = __import__("os").environ.get("BLENDER_SHARED", "")
 N = 15000000

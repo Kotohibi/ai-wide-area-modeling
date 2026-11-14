@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Street furniture from a photo-reviewed spec: street lights, traffic signals and road signs with their real facing.
 
 Inputs (namespace before exec): FPARAMS = {"S": 1.6} and $BLENDER_SHARED/street_furniture.json:

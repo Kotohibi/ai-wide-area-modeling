@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Cross-section profile of the ground classes along the route (to design a procedural road).
 
 usage: python road_profile.py <scratch_dir> <s0> <s1> <win> <lat0> <lat1>

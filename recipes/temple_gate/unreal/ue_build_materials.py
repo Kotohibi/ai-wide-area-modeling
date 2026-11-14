@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Create the the temple master material (BaseTex * BaseColor tint, Roughness) and one MaterialInstance per Blender
 material (T_* colours from temple_lib.MATS) in /Game/Temple/Materials, through the Unreal MCP server."""
 import sys, json, re, ast

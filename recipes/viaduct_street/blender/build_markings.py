@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Road markings as thin 3D plates in the `Markings` collection (run inside Blender after build_v3/build_ground).
 
 Inputs (namespace before exec): MPARAMS = {

@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Place Megaplants (skeletal-mesh trees/shrubs from Bridge, /Game/Megaplant_Library) at the measured vegetation of
 site_params.json: trees by kind and size, hedges as rows of shrubs, shrub balls as small shrubs. Removes the PCG
 placeholders. Outliner folder Temple/Vegetation; re-runnable. Sizes from megaplants.json (bounds in cm)."""

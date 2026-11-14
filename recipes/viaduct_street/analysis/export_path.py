@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, json, numpy as np
 SP = sys.argv[1]
 tr = np.load(SP + r"\traj_site.npy"); d = tr[:, 3]

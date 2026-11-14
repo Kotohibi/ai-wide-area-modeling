@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Place the imported the temple meshes in the open level (outliner folder 'Temple'), remove the template floor,
 move the PlayerStart to the entrance. Blender (x, y, z) m -> UE (100x, -100y, 100z) cm (measured: Y flips)."""
 import sys, json

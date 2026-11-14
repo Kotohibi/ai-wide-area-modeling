@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, json, numpy as np
 SP = sys.argv[1]
 views = sys.argv[2].split(",")                      # e.g. right,front

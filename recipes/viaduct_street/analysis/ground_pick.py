@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 r"""Locate objects the point clouds miss (thin signal posts, sign posts) from pixels picked in training photos.
 
 usage: python ground_pick.py <scratch_dir> "<image>:<u>:<v>[:<label>]" ...

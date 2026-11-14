@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Procedural road (no photo textures): carriageways, kerbed sidewalks / medians, lane markings, side streets.
 
 Inputs (namespace before exec): RPARAMS = {

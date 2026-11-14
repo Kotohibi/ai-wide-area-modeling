@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 r"""Photo | LFS 3DGS (same training camera) | Blender model, one row per pose.
 
 usage: python cmp3_sheet.py <scratch_dir> <out.png> <tile> name1.png name2.png ...

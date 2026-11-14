@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Resample a projected photo mosaic (ortho_photo / underside) into a route-straightened strip.
 
 usage: python straighten.py <scratch_dir> <mosaic_name> <s0> <s1> <lat0> <lat1> <px_per_unit> <out.png>

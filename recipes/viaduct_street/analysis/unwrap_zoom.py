@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Zoomed route-unwrapped map for one section (reads unwrap.py's projection logic on the leveled sparse cloud).
 
 usage: python unwrap_zoom.py <scratch_dir> <s0> <s1> <lat0> <lat1> <px_per_unit> <zlo> <zhi> <out.png>

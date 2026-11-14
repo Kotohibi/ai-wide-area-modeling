@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Transmission towers, utility poles and trees (from extras.py) in the `Extras` collection.
 
 Inputs (namespace before exec): XPARAMS = {"S": 1.6, "tower_min_n": 1000, "tower_merge": 8.0}

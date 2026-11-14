@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 r"""Turn photo-review decisions about poles into $BLENDER_SHARED\street_furniture.json for build_furniture.py.
 
 usage: python make_furniture_spec.py <scratch_dir> <review.json>

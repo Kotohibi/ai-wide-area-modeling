@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Procedural (texture-node) materials for the temple in UE: master M_Temple_Proc computes the base colour from
 world position in a Custom HLSL node (value-noise fbm, wood grain, running-bond pavers/slabs, roof-tile courses) and
 the existing MI_T_* instances are re-parented to it with per-material parameters. No UVs or textures needed.

@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Height layers of the leveled sparse cloud inside lateral bands (one per deck), per route window.
 
 usage: python band_heights.py <scratch_dir> "<lat0>:<lat1>,<lat0>:<lat1>,..." <s0> <s1> <win> [zmax=16]

@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Project the training photos onto a horizontal plane using the COLMAP poses (images.txt).
 
 usage: python ortho_photo.py <scratch_dir> <frame_step> <res> <max_dist> [plane_z=0] [views=front,back,left,right,bottom] [name=ortho_photo]

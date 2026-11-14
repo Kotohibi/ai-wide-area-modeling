@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Build the 'site frame' basis from ground.npy (written by ground.py).
 
 site frame: x = right, y = forward, h = up, origin = reference camera, h measured from the road plane.

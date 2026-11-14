@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Import the exported FBX groups into /Game/Temple/Meshes, assign MI_T_<name> by slot name, enable Nanite on
 heavy meshes. Usage: python ue_import_meshes.py [names...]  (default: every group in export_manifest.json except Planting)"""
 import sys, json, os

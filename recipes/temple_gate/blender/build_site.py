@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Build the precinct around the gate: ground surfaces (slab paths, lawns, beds, parking lines, bollards), walls,
 hedges, shrubs, trees, stoneworks, the main hall (hondō), the corridor, the residence (kuri), the garage, the bell
 tower and the west building, from site_params.json. Run inside Blender after build_temple.py (the gate).

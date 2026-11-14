@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 import sys, numpy as np
 SP = sys.argv[1]
 dt = np.dtype([("p", "<f8", 3), ("n", "<f8", 3), ("c", "u1", 3)])

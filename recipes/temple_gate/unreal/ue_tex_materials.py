@@ -1,3 +1,4 @@
+# NOTE: example from a real project. Contains project-specific constants (paths, ranges, sizes): change them before reuse.
 """Poly Haven textures in UE, world-aligned (triplanar) because the meshes have no UVs.
 1) import the 2K jpgs (diffuse sRGB; normal and roughness linear) into /Game/Temple/Textures/PolyHaven
 2) master M_Temple_Tex: three Custom HLSL nodes (base colour, roughness, world-space normal with whiteout blend),
