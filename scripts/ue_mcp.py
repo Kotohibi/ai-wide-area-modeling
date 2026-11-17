@@ -3,7 +3,8 @@ Use when the editor runs its MCP server (ModelContextProtocol plugin, default ht
 client session has no unreal-mcp tools registered.
 
 usage: python ue_mcp.py toolsets                        list toolsets (meta-tool list_toolsets)
-       python ue_mcp.py describe <Toolset>              tool schemas of one toolset
+       python ue_mcp.py describe <Toolset>              tool schemas of one toolset (UE 5.8 and 5.9 forms)
+       python ue_mcp.py tools <Toolset.Tool> ...        UE 5.9: full schemas of single tools
        python ue_mcp.py call <Toolset> <tool> '<json args>'   dispatch through call_tool
        python ue_mcp.py raw <method> '<json params>'    any JSON-RPC method (tools/list, ...)
 Environment: UE_MCP_URL overrides the endpoint. Python import: from ue_mcp import Ue; Ue().call(ts, tool, {...})
@@ -64,10 +65,14 @@ def unwrap(res):
 if __name__ == "__main__":
     a = sys.argv[1:]; ue = Ue()
     if a[0] == "toolsets": r = unwrap(ue.tool("list_toolsets"))
-    elif a[0] == "describe": r = unwrap(ue.tool("describe_toolset", {"toolset_name": a[1]}))
+    elif a[0] == "describe":
+        try: r = unwrap(ue.tool("describe_toolset", {"toolset_name": a[1]}))                       # UE 5.8
+        except Exception: r = unwrap(ue.tool("describe_toolsets", {"toolset_names": a[1:], "include_schemas": True}))   # UE 5.9
+    elif a[0] == "tools": r = unwrap(ue.tool("describe_tools", {"tool_names": a[1:]}))             # UE 5.9: full schemas of Toolset.Tool names
     elif a[0] == "call": r = ue.call(a[1], a[2], json.loads(a[3]) if len(a) > 3 else {})
     elif a[0] == "raw": r = ue.rpc(a[1], json.loads(a[2]) if len(a) > 2 else {})
     else: sys.exit(__doc__)
+    sys.stdout.reconfigure(encoding="utf-8")                                                       # cp932 consoles choke on the tool descriptions
     print(json.dumps(r, ensure_ascii=False, indent=1) if not isinstance(r, str) else r)
 
 def capture(ue, path, loc, rot, width=None):

@@ -37,6 +37,12 @@ Python は numpy と Pillow を使います（環境の落とし穴は knowledge
 | `unreal/ue_port.py` | UE: 材質（マテリアルの色から）・取り込み（Nanite・当たり判定）・レベル・配置・Third Person で歩く設定。設定は JSON 1 つ |
 | `unreal/ue_surfaces.py` | UE: UV の無いメッシュの材質（ワールド座標の手続き的マテリアル、Poly Haven のテクスチャの三面投影） |
 | `unreal/ue_vegetation.py` | UE: 植物アセット（Megaplants など）の寸法を測り、測った位置・高さ・樹冠の径で木と生垣を置く |
+| `unreal/ue_py.py` | UE 5.9 以降: エディタの中の Python を実行する（`run(code)` / `call(toolset, tool, args)`）。以下の 5.9 用の道具の土台 |
+| `unreal/ue_viewport_cap.py` | UE 5.9: 比較写真と同じ姿勢・画角（`cameras.json`）や任意の視点で、ライブのビューポートから撮る（Lumen が入った絵になる） |
+| `unreal/ue_walk_check.py` | UE 5.9: PIE のキャラクターを戸口ごとに実際に歩かせ、通れるかを判定する |
+| `unreal/ue_niagara_fall.py` | UE 5.9: 花びら・落ち葉・雪など、ゆっくり落ちる粒の Niagara システムを作って置く（量・風・乱流は JSON） |
+| `blender/bl_camera_json.py` / `unreal/ue_camera_seq.py` | カメラワークを Blender から UE へ: コマごとの位置と注視点の JSON → Level Sequence → Movie Render Queue で連番 |
+| `frames_check.py` | 連番（Blender・UE）の欠け・単色のコマ（めり込み）・飛びの検査と一覧画像 |
 | `blender/bl_bake_queue.py` | Blender MCP の制限時間を超える処理を、Blender の中のタイマーで順に実行する |
 | `blender/bl_coplanar.py` | Z ファイティングの候補（同じ向きで同じ平面に重なる面）を全メッシュから探す。生成スクリプトを直したら毎回かける |
 
@@ -125,6 +131,7 @@ python cmp_review.py <dir> sheets                               # 修正前後�
 
 ### 7. ゲームエンジンへ移す（求められたら）
 - Unreal Engine へは [references/unreal.md](references/unreal.md) の手順で移します（`bl_export_groups.py` → `unreal/ue_port.py` → `ue_surfaces.py` → `ue_vegetation.py`）。
+- UE 5.9 以降はツール名と単位の扱いが違います（`ue_mcp.py toolsets` に `PythonScriptingTools` があれば 5.9）。unreal.md の「UE 5.9 での違い」を先に読み、`unreal/ue_py.py` と 5.9 用の道具（撮影・歩行確認・Niagara・カメラワーク）を使います。
 - 移す前に、Blender で面の向きと物体の変換を確かめます（UE は裏面を描かず、Blender は両面を描くので、裏返りに気づけない）。
 - 材質に学習写真を焼き込まず、植物は Blender で作った物を使わずに、本物のアセットに置き換えます（どちらも実例での評価）。素材のダウンロードや、プロジェクト設定の変更・エディタの再起動は、了解を得てから行います。
 
