@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>木造校舎 — 廃墟と復元</title>
+<style>
+  :root { --panel: rgba(16,18,20,0.74); --ink: #f2efe9; --muted: #b9b3a8; --accent: #c8643a; --accent2: #d98aa0; }
+  html, body { margin: 0; height: 100%; background: #0d0f11; color: var(--ink); font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", system-ui, sans-serif; overflow: hidden; }
+  #c { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
+  #ui { position: fixed; left: 16px; top: 16px; width: min(350px, calc(100vw - 32px)); background: var(--panel); backdrop-filter: blur(6px);
+        border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; box-shadow: 0 4px 20px rgba(0,0,0,.35); z-index: 3; }
+  #ui h1 { font-size: 15px; margin: 0 0 2px; font-weight: 600; letter-spacing: .02em; padding-right: 96px; }
+  #ui .sub { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
+  button { background: #2a2d31; color: var(--ink); border: 1px solid #44484e; border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+  button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #variants button { flex: 1; padding: 7px 6px; font-weight: 600; }
+  #variants button[data-v=restored].on { background: var(--accent2); border-color: var(--accent2); }
+  input[type=range] { flex: 1; accent-color: var(--accent); }
+  label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; color: var(--ink); }
+  #time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 64px; text-align: right; }
+  #help, #note { color: var(--muted); font-size: 11.5px; margin-top: 8px; }
+  #load { position: fixed; inset: 0; display: grid; place-items: center; background: #0d0f11; z-index: 5; transition: opacity .6s; }
+  #load .box { width: min(360px, 80vw); text-align: center; }
+  #load .bar { height: 4px; background: #2a2d31; border-radius: 2px; overflow: hidden; margin-top: 12px; position: relative; }
+  /* "still working" signs: transform-only animations run on the compositor, so they keep moving while the script blocks the page */
+  #load .bar.busy::after { content: ""; position: absolute; top: 0; left: 0; height: 100%; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent);
+                           animation: sweep 1.15s linear infinite; will-change: transform; }
+  @keyframes sweep { from { transform: translateX(-110%); } to { transform: translateX(440%); } }
+  #spin { width: 34px; height: 34px; margin: 16px auto 0; border-radius: 50%; border: 3px solid #2a2d31; border-top-color: var(--accent); animation: spin .9s linear infinite; will-change: transform; visibility: hidden; }
+  #load.busy #spin { visibility: visible; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #load .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  #fps { position: fixed; right: 12px; bottom: 10px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; z-index: 3; }
+  #hide { position: absolute; right: 10px; top: 8px; background: none; border: none; color: var(--muted); padding: 2px 6px; }
+  #lang { position: absolute; right: 40px; top: 8px; background: none; border: 1px solid #44484e; color: var(--muted); padding: 1px 7px; font-size: 11px; border-radius: 5px; }
+  #ui.min > :not(h1):not(#hide):not(#lang):not(#variants) { display: none; }
+  /* compare: the divider is drawn by the shader; this is its handle and the two labels */
+  #split { position: fixed; top: 0; bottom: 0; width: 44px; margin-left: -22px; cursor: ew-resize; z-index: 2; display: none; touch-action: none; }
+  #split::after { content: "◀ ▶"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,.92); color: #222; font-size: 11px;
+                  padding: 6px 7px; border-radius: 14px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  .tag { position: fixed; bottom: 14px; background: var(--panel); padding: 4px 12px; border-radius: 14px; font-size: 13px; z-index: 2; display: none; pointer-events: none; }
+  #tagL { left: 16px; } #tagR { right: 16px; bottom: 34px; }
+  body.cmp #split, body.cmp .tag { display: block; }
+  #fwd { position: fixed; right: 18px; bottom: 60px; width: 64px; height: 64px; border-radius: 50%; font-size: 22px; display: none; z-index: 3; touch-action: none; user-select: none; }
+  body.walk.touch #fwd { display: block; }
+  @media (max-width: 520px) { #ui { left: 8px; top: 8px; padding: 9px 10px; font-size: 12px; } #help { display: none; } button { padding: 6px 9px; } }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="load"><div class="box"><div data-i18n="loading">読み込み中…</div><div id="lpct" style="font-size:30px;font-variant-numeric:tabular-nums;margin-top:6px">0 %</div><div class="bar"><i id="lbar"></i></div><div id="lmsg" style="color:#b9b3a8;font-size:12px;margin-top:8px"></div><div id="spin"></div></div></div>
+<div id="split"></div><div id="tagL" class="tag" data-i18n="ruin">廃墟</div><div id="tagR" class="tag" data-i18n="restored">復元</div>
+<button id="fwd">▲</button>
+<div id="ui">
+  <button id="hide" data-i18n-title="hide" title="パネルをたたむ">－</button>
+  <button id="lang" title="Language / 言語">English</button>
+  <h1 data-i18n="title">木造校舎 — 廃墟と復元</h1>
+  <div class="sub" data-i18n="sub">ドローンの 360° 撮影から Blender で起こしたモデル（Three.js 版）</div>
+  <div class="row" id="variants"><button data-v="ruin" class="on" data-i18n="ruin">廃墟</button><button data-v="restored" data-i18n="restored">復元</button><button data-v="compare" data-i18n="compare">比較</button></div>
+  <div class="row"><button id="mFly" class="on" data-i18n="fly">フライスルー</button><button id="mFree" data-i18n="free">自由視点</button><button id="mWalk" data-i18n="walk">歩く</button><button id="play">❚❚</button></div>
+  <div class="row"><button id="bgm" data-i18n-title="bgmTip" title="BGM を鳴らす / 止める（廃墟と復元で曲が変わります）">♪ BGM</button><span data-i18n="vol">音量</span><input id="vol" type="range" min="0" max="1" step="0.01" value="0.5"><span id="volv" style="min-width:42px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums">50 %</span></div>
+  <div class="row"><input id="seek" type="range" min="0" max="1" step="0.0005" value="0"><span id="time">0.0 s</span></div>
+  <div class="row"><label><input id="cPetals" type="checkbox" checked><span data-i18n="petals">花びら</span></label><label><input id="cShadow" type="checkbox" checked><span data-i18n="shadow">影</span></label>
+    <label><input id="cVeg" type="checkbox" checked><span data-i18n="veg">植生</span></label><label><input id="cAO" type="checkbox" checked><span data-i18n="ao">陰影</span></label><button id="qual" title="Quality / 画質"></button></div>
+  <div id="help" data-i18n="help">廃墟 / 復元 / 比較（境界をドラッグ）はキー 1 / 2 / 3 でも切り替えられます。自由視点: 左ドラッグで回転、右ドラッグで移動、ホイールで拡大縮小。歩く: ドラッグで見回し、W A S D か矢印キーで移動（Shift で速く。壁は通り抜けます）。</div>
+  <div id="note" data-i18n="note">復元は想像による姿です（校名は不明）。縮尺は推定（柱間 1 間 = 1.818 m、およそ ±2 %）。</div>
+</div>
+<div id="fps"></div>
+<script>
+// Language: Japanese when the browser's preferred language is Japanese, English otherwise; ?lang=ja / ?lang=en overrides it.
+(function () {
+  var EN = { title: "A wooden schoolhouse — ruin and restoration", sub: "Modelled in Blender from 360° drone footage (Three.js version)", loading: "Loading…",
+             ruin: "Ruin", restored: "Restored", compare: "Compare", fly: "Flythrough", free: "Free view", walk: "Walk",
+             petals: "Petals", shadow: "Shadows", veg: "Vegetation", ao: "Ambient shade", hide: "Collapse the panel", vol: "Volume", bgmTip: "Play / stop the music (it changes between the ruin and the restored school)",
+             help: "Ruin / Restored / Compare (drag the divider): keys 1 / 2 / 3. Free view: drag to rotate, right-drag to pan, wheel to zoom. Walk: drag to look round, W A S D or the arrow keys to move (Shift = faster; walls do not stop you).",
+             note: "The restoration is imagined (the school's name is unknown). Scale is estimated (post spacing 1 ken = 1.818 m, about ±2 %)." };
+  var JA = { _title: document.title }, JAT = {};
+  document.querySelectorAll("[data-i18n]").forEach(function (e) { JA[e.getAttribute("data-i18n")] = e.textContent; });
+  document.querySelectorAll("[data-i18n-title]").forEach(function (e) { JAT[e.getAttribute("data-i18n-title")] = e.title; });
+  function setLang(lang, save) {
+    document.documentElement.lang = lang; window.__lang = lang; var en = lang === "en";
+    document.title = en ? EN.title : JA._title;
+    document.querySelectorAll("[data-i18n]").forEach(function (e) { var k = e.getAttribute("data-i18n"), t = en ? EN[k] : JA[k]; if (t) e.textContent = t; });
+    document.querySelectorAll("[data-i18n-title]").forEach(function (e) { var k = e.getAttribute("data-i18n-title"), t = en ? EN[k] : JAT[k]; if (t) e.title = t; });
+    var b = document.getElementById("lang"); if (b) b.textContent = en ? "日本語" : "English";          // the button names the language it switches TO
+    if (save) { try { localStorage.setItem("school_lang", lang); } catch (e) {} }
+  }
+  var q = new URLSearchParams(location.search).get("lang"), saved = null;
+  try { saved = localStorage.getItem("school_lang"); } catch (e) {}
+  var pref = (navigator.languages && navigator.languages.length ? navigator.languages[0] : navigator.language) || "en";
+  var ok = function (v) { return v === "ja" || v === "en"; };
+  setLang(ok(q) ? q : ok(saved) ? saved : (/^ja\b/i.test(pref) ? "ja" : "en"), false);
+  document.getElementById("lang").onclick = function () { setLang(window.__lang === "en" ? "ja" : "en", true); };
+})();
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { Sky } from "three/addons/objects/Sky.js";
+import { procMaterial, glassMaterial, initProc, QUALITY, LIGHTING } from "./proc.js";
+
+const $ = (id) => document.getElementById(id);
+const QS = new URLSearchParams(location.search);
+const canvas = $("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });      // (the scene is drawn into its own multisampled targets)
+// Quality profiles: ?q=low|mid|high or the button (kept in this browser).  Every device starts in "high".
+//   low : 1x pixels, no relief, no ambient shade, 2 noise octaves, 2048 shadow map, far leaf cards only, fewer petals
+//   mid : up to 1.25x pixels, relief within 15 m, 3 octaves      high: everything
+const QP = { low:  { dpr: 1.0,  bump: 0,  ao: false, shadow: 2048, near: 0,  oct: 2, petals: 0.4, msaa: 0 },
+             mid:  { dpr: 1.25, bump: 15, ao: true,  shadow: 2048, near: 35, oct: 3, petals: 0.7, msaa: 4 },
+             high: { dpr: 1.5,  bump: 30, ao: true,  shadow: 4096, near: 60, oct: 5, petals: 1.0, msaa: 4 } };
+const isTouch = navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+if (isTouch) document.body.classList.add("touch");
+let qName = QS.get("q"); try { qName = QP[qName] ? qName : localStorage.getItem("school_q"); } catch (e) {}
+if (!QP[qName]) qName = "high";
+const Q = QP[qName]; QUALITY.uBumpDist.value = Q.bump; QUALITY.octaves = Q.oct;
+if (innerWidth < 520) { $("ui").classList.add("min"); $("hide").textContent = "＋"; }      // narrow screens: start with the panel folded (the variant buttons stay)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.dpr));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.AgXToneMapping ?? THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.info.autoReset = false;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.08, 900);
+const controls = new OrbitControls(camera, canvas); controls.enableDamping = true; controls.enabled = false; controls.maxDistance = 220; controls.minDistance = 0.3;
+
+// ---------- loading: every file is downloaded as a byte stream (the bar follows the bytes), then the .glb files are decoded
+const FILES = { "scene.json": 0.2e6, "materials.json": 0.02e6, "ruin.json": 0.15e6, "restored.json": 0.15e6, "ruin.glb": 3.5e6, "restored.glb": 2.5e6, "ruin_veg.glb": 3.0e6, "restored_veg.glb": 3.0e6 };
+const LD = Object.fromEntries(Object.keys(FILES).map(k => [k, { got: 0, total: FILES[k], done: false }]));
+const LT = () => window.__lang === "en" ? { dl: "Downloading", dec: "Unpacking", prep: "Preparing the scene" } : { dl: "ダウンロード中", dec: "展開中", prep: "シーンを準備中" };
+const STEPS = { ja: ["廃墟の建物と地形", "復元した校舎と地形", "木と草の配置", "花びら", "描画の準備（シェーダー）"], en: ["The ruin: buildings and terrain", "The restored school and terrain", "Placing trees and grass", "Petals", "Getting ready to draw (shaders)"] };
+async function step(i) { const L = window.__lang === "en" ? "en" : "ja"; $("load").classList.add("busy"); document.querySelector("#load .bar").classList.add("busy");
+  $("lmsg").textContent = LT().prep + " " + (i + 1) + " / " + STEPS[L].length + ": " + STEPS[L][i]; await new Promise(r => setTimeout(r, 30)); }      // (never await requestAnimationFrame here: it does not fire in a background tab)
+function showProgress(stage) {
+  let got = 0, tot = 0; for (const f of Object.values(LD)) { got += Math.min(f.got, f.total); tot += f.total; }
+  const pct = Math.min(100, Math.floor(100 * got / tot)); $("lbar").style.width = pct + "%"; $("lpct").textContent = pct + " %";
+  const cur = Object.entries(LD).filter(([k, f]) => !f.done && f.got > 0).map(([k, f]) => k + " " + Math.floor(100 * Math.min(f.got, f.total) / f.total) + "%").join(" · ");
+  $("lmsg").textContent = stage || (LT().dl + (cur ? ": " + cur : ""));
+}
+async function download(name) {
+  const r = await fetch(name, { cache: "no-cache" }); if (!r.ok) throw new Error(name + " " + r.status);
+  const len = +r.headers.get("Content-Length"); const enc = r.headers.get("Content-Encoding"); if (len && !enc) LD[name].total = len;
+  if (!r.body) { const b = await r.arrayBuffer(); LD[name].got = LD[name].total = b.byteLength; LD[name].done = true; showProgress(); return b; }
+  const rd = r.body.getReader(), parts = []; let n = 0;
+  for (;;) { const { done, value } = await rd.read(); if (done) break; parts.push(value); n += value.length; LD[name].got = n; if (n > LD[name].total) LD[name].total = n; showProgress(); }
+  LD[name].got = LD[name].total = n; LD[name].done = true; showProgress();
+  const out = new Uint8Array(n); let o = 0; for (const q of parts) { out.set(q, o); o += q.length; } return out.buffer;
+}
+const json = async (name) => JSON.parse(new TextDecoder().decode(await download(name)));
+const draco = new DRACOLoader().setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/");
+const gltf = new GLTFLoader().setDRACOLoader(draco);
+showProgress();
+const [S, PM, IR, IS, bRuin, bRest, bRuinV, bRestV] = await Promise.all([json("scene.json"), json("materials.json"), json("ruin.json"), json("restored.json"),
+  download("ruin.glb"), download("restored.glb"), download("ruin_veg.glb"), download("restored_veg.glb")]);
+$("load").classList.add("busy"); document.querySelector("#load .bar").classList.add("busy");
+showProgress(LT().dec + ": ruin.glb · restored.glb · *_veg.glb");
+const [gRuin, gRest, gRuinV, gRestV] = await Promise.all([bRuin, bRest, bRuinV, bRestV].map(b => gltf.parseAsync(b, "")));
+initProc(S, PM);
+
+// ---------- sun, sky, light.  The two variants have their own weather: the ruin under a thin haze, the restored school on a clear spring day.
+const toSun = new THREE.Vector3(...S.sun_to).normalize();
+const sky = new Sky(); sky.scale.setScalar(4000); const su = sky.material.uniforms; su.sunPosition.value.copy(toSun); su.mieDirectionalG.value = 0.82; scene.add(sky);
+const G = (r, g, b) => new THREE.Color(r, g, b);
+const LOOK = {
+  ruin:     { sunI: 3.3, sunC: G(1.0, 0.95, 0.87), hemi: 0.55, hemiSky: G(0.80, 0.84, 0.88), hemiGnd: G(0.30, 0.28, 0.20), sky: [7.0, 1.1, 0.014], fog: [G(0.70, 0.74, 0.76), 0.0030], env: 0.50 },
+  restored: { sunI: 4.3, sunC: G(1.0, 0.96, 0.90), hemi: 0.50, hemiSky: G(0.74, 0.83, 0.94), hemiGnd: G(0.40, 0.34, 0.24), sky: [3.0, 1.5, 0.005], fog: [G(0.68, 0.77, 0.87), 0.0016], env: 0.50 },
+};
+const pmrem = new THREE.PMREMGenerator(renderer); const ENVTEX = {};
+{ const es = new THREE.Scene(), s2 = new Sky(); s2.scale.setScalar(1000); es.add(s2); const u = s2.material.uniforms; u.sunPosition.value.copy(toSun); u.mieDirectionalG.value = 0.82;
+  for (const [k, L] of Object.entries(LOOK)) { u.turbidity.value = L.sky[0]; u.rayleigh.value = L.sky[1]; u.mieCoefficient.value = L.sky[2]; ENVTEX[k] = pmrem.fromScene(es, 0.04).texture; } }
+scene.fog = new THREE.FogExp2(0xb0bcc4, 0.002);
+const sun = new THREE.DirectionalLight(0xffffff, 4); sun.castShadow = true; sun.shadow.mapSize.set(Q.shadow, Q.shadow);
+const SH = 34; Object.assign(sun.shadow.camera, { left: -SH, right: SH, top: SH, bottom: -SH, near: 1, far: 400 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03; sun.shadow.radius = 2.4; scene.add(sun, sun.target);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x554433, 0.5); scene.add(hemi);
+const allMats = new Set();
+function applyLook(v) {
+  const L = LOOK[v]; sun.color.copy(L.sunC); sun.intensity = L.sunI; hemi.intensity = L.hemi; hemi.color.copy(L.hemiSky); hemi.groundColor.copy(L.hemiGnd);
+  su.turbidity.value = L.sky[0]; su.rayleigh.value = L.sky[1]; su.mieCoefficient.value = L.sky[2];
+  scene.environment = ENVTEX[v]; scene.fog.color.copy(L.fog[0]); scene.fog.density = L.fog[1];
+}
+
+// ---------- leaf textures (drawn here): a 1024 px atlas of four sprigs per kind; the grey value multiplies the colour stored in each card
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function leafTexture(kind) {
+  const N = 1024, T = 512, cv = document.createElement("canvas"); cv.width = cv.height = N; const g = cv.getContext("2d");
+  const rnd = mulberry(kind.length * 977 + 5); const grey = (v) => { v = Math.max(0, Math.min(255, Math.round(v))); return `rgb(${v},${v},${v})`; };
+  function leaf(x, y, ang, L, v) {                                                          // ovate blade with a midrib and side veins
+    g.save(); g.translate(x, y); g.rotate(ang); const w = L * 0.30;
+    const shape = () => { g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(-w * 1.25, -L * 0.2, -w * 1.1, -L * 0.72, 0, -L); g.bezierCurveTo(w * 1.1, -L * 0.72, w * 1.25, -L * 0.2, 0, 0); };
+    const gr = g.createLinearGradient(0, 0, 0, -L); gr.addColorStop(0, grey(v * 0.72)); gr.addColorStop(0.45, grey(v)); gr.addColorStop(1, grey(v * 0.9));
+    g.fillStyle = gr; shape(); g.fill(); g.save(); shape(); g.clip();
+    g.strokeStyle = grey(v * 0.62); g.lineWidth = Math.max(1.2, L * 0.022); g.lineCap = "round"; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -L); g.stroke(); g.lineWidth = Math.max(0.8, L * 0.012);
+    for (let k = 1; k <= 6; k++) { const yy = -L * k / 7.5; for (const sx of [-1, 1]) { g.beginPath(); g.moveTo(0, yy); g.lineTo(sx * L * 0.3, yy - L * 0.16); g.stroke(); } }
+    g.fillStyle = "rgba(255,255,255,0.10)"; g.fillRect(0, -L, L, L); g.restore(); g.restore();
+  }
+  function flower(x, y, R, v) {                                                             // cherry blossom: five notched petals round a darker eye
+    const a0 = rnd() * 6.28;
+    for (let k = 0; k < 5; k++) { const a = a0 + k * 1.2566; g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = grey(v * (0.9 + 0.1 * rnd()));
+      g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(-R * 0.55, -R * 0.35, -R * 0.5, -R * 0.95, -R * 0.08, -R); g.lineTo(0, -R * 0.86); g.lineTo(R * 0.08, -R); g.bezierCurveTo(R * 0.5, -R * 0.95, R * 0.55, -R * 0.35, 0, 0); g.fill(); g.restore(); }
+    g.fillStyle = grey(v * 0.62); g.beginPath(); g.arc(x, y, R * 0.16, 0, 6.3); g.fill();
+  }
+  for (let tile = 0; tile < 4; tile++) {
+    const ox = (tile % 2) * T, oy = Math.floor(tile / 2) * T; g.save(); g.beginPath(); g.rect(ox + 6, oy + 6, T - 12, T - 12); g.clip(); g.translate(ox, oy);
+    if (kind === "spray") {                                                                 // sugi: drooping cord-like shoots covered with short curved needles
+      const nb = 5 + Math.floor(rnd() * 3);
+      for (let b = 0; b < nb; b++) {
+        let x = T * (0.5 + (rnd() - 0.5) * 0.25), y = T * 0.94, a = -Math.PI / 2 + (b - (nb - 1) / 2) * 0.42 + (rnd() - 0.5) * 0.2; const L = T * (0.55 + 0.3 * rnd()), n = 46;
+        for (let i = 0; i < n; i++) {
+          const t = i / n; a += (rnd() - 0.5) * 0.10 + (a > -Math.PI / 2 ? 0.012 : -0.012); const nx = x + Math.cos(a) * L / n, ny = y + Math.sin(a) * L / n;
+          const v = 165 + 85 * rnd() - 40 * (1 - t), nl = T * (0.030 + 0.018 * rnd()) * (1 - 0.45 * t);
+          g.strokeStyle = grey(v); g.lineWidth = 3.4 - 1.4 * t; g.lineCap = "round";
+          for (const sgn of [-1, 1]) { g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a + sgn * 0.9) * nl * 0.6, y + Math.sin(a + sgn * 0.9) * nl * 0.6, x + Math.cos(a + sgn * 0.45) * nl, y + Math.sin(a + sgn * 0.45) * nl); g.stroke(); }
+          g.strokeStyle = grey(120); g.lineWidth = 2.6 - 1.2 * t; g.beginPath(); g.moveTo(x, y); g.lineTo(nx, ny); g.stroke(); x = nx; y = ny;
+        }
+      }
+    } else {
+      const items = [];
+      for (let tw = 0; tw < 2; tw++) {
+        let x = T * (0.5 + (tw - 0.5) * 0.12), y = T * 0.95, a = -Math.PI / 2 + (tw - 0.5) * 0.7 + (rnd() - 0.5) * 0.3; const L = T * (0.50 + 0.2 * rnd()), n = kind === "blossom" ? 9 : 7;
+        g.strokeStyle = grey(kind === "blossom" ? 70 : 95); g.lineCap = "round";
+        for (let i = 0; i < n; i++) {
+          a += (rnd() - 0.5) * 0.25; const nx = x + Math.cos(a) * L / n, ny = y + Math.sin(a) * L / n; g.lineWidth = 5 - 3 * i / n; g.beginPath(); g.moveTo(x, y); g.lineTo(nx, ny); g.stroke(); x = nx; y = ny;
+          const sgn = i % 2 ? 1 : -1, la = a + sgn * (0.75 + 0.5 * rnd());
+          if (kind === "blossom") { for (let q = 0; q < 2; q++) items.push([x + Math.cos(la + q) * T * 0.07 * (q + 0.6), y + Math.sin(la + q) * T * 0.07 * (q + 0.6), 0, T * (0.060 + 0.022 * rnd()), 205 + 50 * rnd()]); }
+          else items.push([x, y, la + Math.PI / 2, T * (0.17 + 0.06 * rnd()), 185 + 70 * rnd()]);
+        }
+        items.push(kind === "blossom" ? [x, y, 0, T * 0.07, 240] : [x, y, a + Math.PI / 2, T * 0.19, 215 + 40 * rnd()]);
+      }
+      for (const [x, y, ang, ll, v] of items.sort((p, q) => p[4] - q[4])) { if (kind === "blossom") flower(x, y, ll, v); else leaf(x, y, ang, ll, v); }
+    }
+    g.restore();
+  }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+const leafMats = {};
+function leafMat(kind) {
+  if (leafMats[kind]) return leafMats[kind];
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, map: leafTexture(kind), alphaTest: 0.42, side: THREE.DoubleSide, roughness: 0.85, metalness: 0, alphaToCoverage: Q.msaa > 0 });
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n reflectedLight.directDiffuse += diffuseColor.rgb * 0.16 * vec3(1.0, 0.92, 0.78);")      // cheap translucency: leaves against the light keep some of it
+      .replace("#include <alphatest_fragment>", `
+        #ifdef USE_MAP
+          vec2 tdx = dFdx(vMapUv * 1024.0), tdy = dFdy(vMapUv * 1024.0);
+          diffuseColor.a *= 1.0 + max(0.0, 0.5 * log2(max(dot(tdx, tdx), dot(tdy, tdy)))) * 0.22;      // keep the coverage in the small mip levels (far crowns went thin)
+        #endif
+        #include <alphatest_fragment>`);
+  };
+  m.customProgramCacheKey = () => "school-leaf"; leafMats[kind] = m; allMats.add(m); return m;
+}
+
+// ---------- one variant = buildings + terrain + grass (static .glb) and its trees (prototypes .glb + instance matrices)
+const V = {}; const CELL = 40, FOREST_TRUNKS = 55;
+const m4 = (a) => new THREE.Matrix4().set(a[0], a[3], a[6], a[9], a[1], a[4], a[7], a[10], a[2], a[5], a[8], a[11], 0, 0, 0, 1);
+// terrain heights: one per 0.5 m grid vertex, keyed by the grid index (K2 tolerates the few mm the mesh compression moves a vertex)
+const K2 = (v) => Math.floor(v * 2 + 0.25);
+const baseName = (n) => n.replace(/\.?\d{3}$/, "");      // Blender's ".001" suffix on a copied object arrives as "TW_x001": look names up by the base name too
+function buildVariant(name, sg, vg, info) {
+  const ruin = name === "ruin", group = new THREE.Group(); group.name = name; const mats = new Map(), missing = new Set(), prims = {};
+  const matFor = (nm) => {
+    if (mats.has(nm)) return mats.get(nm);
+    let m;
+    if (nm in PM.glass) m = glassMaterial(PM.glass[nm], !ruin);
+    else if (PM[name][nm]) m = procMaterial(PM[name][nm], { ruin });
+    else { missing.add(nm); m = new THREE.MeshStandardMaterial({ color: 0x8a8580, roughness: 0.9, side: THREE.DoubleSide }); }
+    m.name = nm; mats.set(nm, m); allMats.add(m); return m;
+  };
+  const hgt = new Map(), off = [0, 0, 0]; sg.scene.updateMatrixWorld(true); const v3 = new THREE.Vector3();
+  sg.scene.traverse(o => {
+    if (!o.isMesh) return;
+    const nm = o.material?.name || "", where = o.name + " " + (o.parent?.name || "");
+    const isTerrain = /S_terrain/.test(where), isGrass = /S_grass/.test(where), isGlass = nm in PM.glass;
+    o.material = matFor(nm); prims[nm] = (prims[nm] || 0) + (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+    o.castShadow = !isTerrain && !isGrass && !isGlass; o.receiveShadow = !isGlass; if (isGlass) o.renderOrder = 2;
+    if ((isTerrain || isGrass) && !o.geometry.attributes.color) console.warn(name, where, "has no vertex colour");
+    if (isTerrain) { const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i++) { v3.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); hgt.set(K2(v3.x) + "," + K2(v3.z), v3.y);
+        if (Math.abs(v3.x - 20) < 40 && Math.abs(v3.z + 8) < 30) { off[0] += v3.x * 2 - K2(v3.x); off[1] += v3.z * 2 - K2(v3.z); off[2]++; } } }
+  });
+  group.add(sg.scene);
+  // trees
+  const nodes = {}; vg.scene.traverse(o => { if (!o.isMesh) return; for (const n of [o.name, baseName(o.name), o.parent?.name, baseName(o.parent?.name || "")]) if (n && !nodes[n]) nodes[n] = o; });
+  const vegGroup = new THREE.Group(); group.add(vegGroup); const chunks = []; const count = { trunks: 0, lod0: 0, lod1: 0, noGeo: new Set() };
+  const ext = {};      // where each layer's instances are (a count alone did not show that a whole layer sat at the origin)
+  for (const [layer, protos] of Object.entries(info.trees)) { const e = ext[layer] = [1e9, -1e9, 1e9, -1e9, 1e9, -1e9]; for (const list of Object.values(protos)) for (const a of list) {
+    e[0] = Math.min(e[0], a[9]); e[1] = Math.max(e[1], a[9]); e[2] = Math.min(e[2], -a[11]); e[3] = Math.max(e[3], -a[11]); e[4] = Math.min(e[4], a[4]); e[5] = Math.max(e[5], a[4]); } }
+  const barkOf = (p) => matFor(/cedar/.test(p) ? "bark_cedar" : /cherry/.test(p) ? "bark_dark" : "bark");
+  function inst(geoName, mat, ms, cast) {
+    const g = nodes[geoName]?.geometry; if (!g) { count.noGeo.add(geoName); return null; }
+    const im = new THREE.InstancedMesh(g, mat, ms.length); ms.forEach((m, i) => im.setMatrixAt(i, m));
+    im.castShadow = cast; im.receiveShadow = false; im.computeBoundingSphere(); vegGroup.add(im); return im;
+  }
+  for (const [layer, protos] of Object.entries(info.trees)) for (const [p, list] of Object.entries(protos)) {
+    const cells = new Map(); for (const a of list) { const k = Math.floor(a[9] / CELL) + "," + Math.floor(a[11] / CELL); (cells.get(k) || cells.set(k, []).get(k)).push(a); }
+    for (const arr of cells.values()) {
+      const ms = arr.map(m4), c = new THREE.Vector3(); for (const a of arr) c.add(v3.set(a[9], a[10], a[11])); c.divideScalar(arr.length);
+      const ch = { centre: c, lod0: [], lod1: [], always: [], ftrunk: [] }, lm = leafMat(info.protos[p]?.leaf || "ovate"), near = layer === "trees" && Q.near > 0;
+      const tw = inst("TW_" + p, barkOf(p), ms, layer === "trees"); if (tw) { (layer === "trees" ? ch.always : ch.ftrunk).push(tw); count.trunks += ms.length; }
+      const l0 = near ? inst("LC0_" + p, lm, ms, false) : null; if (l0) { ch.lod0.push(l0); count.lod0 += ms.length; }
+      const l1 = inst("LC1_" + p, lm, ms, false); if (l1) { ch.lod1.push(l1); count.lod1 += ms.length; }
+      chunks.push(ch);
+    }
+  }
+  console.info(`[${name}] materials ${mats.size}, missing: ${[...missing].join(", ") || "none"}; trees: trunks ${count.trunks}, near crowns ${count.lod0}, far crowns ${count.lod1}, no geometry: ${[...count.noGeo].join(", ") || "none"}; ` +
+    Object.entries(ext).map(([l, e]) => `${l}: x ${e[0].toFixed(0)}..${e[1].toFixed(0)} y ${e[2].toFixed(0)}..${e[3].toFixed(0)} height ${e[4].toFixed(1)}..${e[5].toFixed(1)} m`).join("; "));
+  V[name] = { name, group, vegGroup, chunks, ext, hgt, off: [off[0] / Math.max(1, off[2]) / 2, off[1] / Math.max(1, off[2]) / 2], info, missing: [...missing], prims, count: { ...count, noGeo: [...count.noGeo] } };
+  scene.add(group);
+}
+await step(0); buildVariant("ruin", gRuin, gRuinV, IR);
+await step(1); buildVariant("restored", gRest, gRestV, IS);
+await step(2);
+// height under a point: the floors of the buildings (model x, y rectangles), else the terrain of the variant (bilinear in its 0.5 m grid)
+const inRect = (r, x, y, m = 0) => x > r[0] - m && x < r[2] + m && y > r[1] - m && y < r[3] + m;
+function terrainY(variant, X, Z) {
+  const vv = V[variant], fx = (X - vv.off[0]) * 2, fz = (Z - vv.off[1]) * 2, i = Math.floor(fx), k = Math.floor(fz), u = fx - i, w = fz - k, H = vv.hgt;
+  const a = H.get(i + "," + k), b = H.get((i + 1) + "," + k), c = H.get(i + "," + (k + 1)), d = H.get((i + 1) + "," + (k + 1));
+  if (a === undefined || b === undefined || c === undefined || d === undefined) return a ?? b ?? c ?? d ?? 0;
+  return (a * (1 - u) + b * u) * (1 - w) + (c * (1 - u) + d * u) * w;
+}
+function groundY(variant, X, Z) { for (const f of S.floors) if (inRect(f.r, X, -Z)) return f.z; return terrainY(variant, X, Z); }
+function indoorDepth(X, Y, Z) { let d = -1; for (const b of S.boxes) if (Y < b[4] + 0.3) d = Math.max(d, Math.min(X - b[0], b[2] - X, -Z - b[1], b[3] + Z)); return d; }      // > 0 inside a building (m from the nearest outer wall)
+
+await step(3);
+// ---------- cherry petals of the restored school: only round the cherry trees.  Every petal starts in a crown, comes down slowly and is carried
+// downwind by one wind for all of them (a steady breeze with slow gusts), with a little sway of its own; the fallen petals lie where that wind
+// puts them - under the crowns and in a tail downwind.  Knobs: WIND.speed (m/s), WIND.gust (0..1), WIND.dir, NP (in the air), NG (on the ground).
+// A petal far from the camera is drawn at least about 1.6 pixels wide, or it would vanish (a 5 cm petal is under a pixel beyond 20 m).
+const NP = Math.floor(7000 * Q.petals), NG = Math.floor(34000 * Q.petals);
+const WIND = { dir: [0.97, -0.24], speed: 0.30, gust: 0.6, omega: 0.35 };      // direction in three.js x, z (model: +x and a little +y, away from the school); gusts every 18 s
+const windRun = (t0, tt) => WIND.speed * (tt + WIND.gust / WIND.omega * (Math.cos(WIND.omega * t0) - Math.cos(WIND.omega * (t0 + tt))));      // metres drifted between t0 and t0 + tt
+const petalTex = (() => { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.beginPath();
+  g.moveTo(32, 60); g.bezierCurveTo(4, 44, 6, 10, 28, 5); g.lineTo(32, 12); g.lineTo(36, 5); g.bezierCurveTo(58, 10, 60, 44, 32, 60); g.fill(); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const petalMat = new THREE.MeshStandardMaterial({ map: petalTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.8, color: G(0.98, 0.80, 0.86) }); allMats.add(petalMat);
+const petals = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), petalMat, Math.max(1, NP)); petals.frustumCulled = false; petals.visible = false; scene.add(petals);
+const cherrySrc = IS.cherry.filter(c => c.layer === "trees"), cherryW = cherrySrc.reduce((s, c) => s + c.r * c.r, 0);
+const pickCherry = (r) => { let t = r() * cherryW; for (const c of cherrySrc) { t -= c.r * c.r; if (t <= 0) return c; } return cherrySrc[0]; };
+const underRoof = (x, z, m) => S.roofs.some(q => inRect(q, x, -z, m)) || S.floors.some(f => inRect(f.r, x, -z, m));
+// one petal's fall: where it leaves the crown, how fast it comes down, and where the mean wind sets it down (null = it would go through a roof)
+function petalFall(r) {
+  const s = pickCherry(r), a = r() * 6.283, rr = Math.sqrt(r()) * s.r * 1.1, x = s.p[0] + Math.cos(a) * rr, z = s.p[2] + Math.sin(a) * rr;
+  const top = s.p[1] + s.crown[0] + r() * (s.crown[1] - s.crown[0]) * 0.9, v = 0.34 + 0.16 * r();
+  let drop = Math.max(1, top - groundY("restored", x, z)), lx = x, lz = z;
+  for (let k = 0; k < 2; k++) { lx = x + WIND.dir[0] * WIND.speed * drop / v; lz = z + WIND.dir[1] * WIND.speed * drop / v; drop = Math.max(1, top - groundY("restored", lx, lz)); }
+  if (underRoof(x, z, 0.4) || underRoof(lx, lz, 0.4) || underRoof((x + lx) / 2, (z + lz) / 2, 0.4)) return null;
+  return { x, z, top, drop, v, lx, lz };
+}
+const PF = []; { const r = mulberry(11);
+  for (let guard = 0; PF.length < NP && cherrySrc.length && guard < NP * 20; guard++) {
+    const f = petalFall(r); if (!f) continue;
+    PF.push({ ...f, ph: r() * 100, sw: 0.10 + 0.22 * r(), ax: new THREE.Vector3(r() - 0.5, r() - 0.5, r() - 0.5).normalize(), spin: 0.8 + 1.6 * r(), s: 0.045 + 0.020 * r() });
+  } petals.count = PF.length; }
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1);
+function updatePetals(t) {
+  const cp = camera.position, pxk = 1.6 * 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) / innerHeight;
+  for (let i = 0; i < PF.length; i++) {
+    const f = PF[i], period = f.drop / f.v, tt = (t + f.ph * 7.0) % period, run = windRun(t - tt, tt);      // the wind is the same for every petal at one moment: they drift together
+    _p.set(f.x + WIND.dir[0] * run + Math.sin(tt * 0.6 + f.ph) * f.sw, f.top - tt * f.v, f.z + WIND.dir[1] * run + Math.cos(tt * 0.5 + f.ph * 1.7) * f.sw);
+    _q.setFromAxisAngle(f.ax, tt * f.spin + f.ph); _s.setScalar(Math.max(f.s, Math.min(f.s * 3.2, Math.hypot(_p.x - cp.x, _p.y - cp.y, _p.z - cp.z) * pxk)));
+    petals.setMatrixAt(i, _m.compose(_p, _q, _s));
+  }
+  petals.instanceMatrix.needsUpdate = true;
+}
+// fallen petals: flat on the ground where the same falls end - from under the crown (a calm moment) to the full drift downwind (a gust)
+const petalGroundMat = petalMat.clone(); petalGroundMat.polygonOffset = true; petalGroundMat.polygonOffsetFactor = -2; petalGroundMat.polygonOffsetUnits = -2; allMats.add(petalGroundMat);
+const fallen = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), petalGroundMat, Math.max(1, NG)); fallen.frustumCulled = false; fallen.visible = false; fallen.receiveShadow = true; scene.add(fallen);
+{ const r = mulberry(23), e = new THREE.Euler(); let n = 0;
+  for (let guard = 0; n < NG && cherrySrc.length && guard < NG * 20; guard++) {
+    const f = petalFall(r); if (!f) continue;
+    const k = 1.3 * r(), x = f.x + (f.lx - f.x) * k + (r() - 0.5) * 0.7, z = f.z + (f.lz - f.z) * k + (r() - 0.5) * 0.7;
+    if (underRoof(x, z, 0.05)) continue;
+    _p.set(x, terrainY("restored", x, z) + 0.015, z); _q.setFromEuler(e.set((r() - 0.5) * 0.3, r() * 6.283, (r() - 0.5) * 0.3, "YXZ")); _s.setScalar(0.042 + 0.022 * r());
+    fallen.setMatrixAt(n++, _m.compose(_p, _q, _s));
+  } fallen.count = n; fallen.instanceMatrix.needsUpdate = true; }
+
+// ---------- which variant is on screen: one of them, a wipe from one to the other, or both side by side (compare)
+let cur = QS.get("v") === "restored" ? "restored" : "ruin", compare = false, split = 0.5, wipe = null; const WIPE_T = 1.3, WMIN = -0.09, WMAX = 1.09;
+function viewState() {
+  if (compare) return { left: "ruin", right: "restored", w: split, slant: 0, line: 1 };
+  if (wipe) { const k = wipe.t / WIPE_T, e = k * k * (3 - 2 * k); return { left: wipe.to, right: wipe.from, w: WMIN + e * (WMAX - WMIN), slant: 0.16, line: 0.7 }; }
+  return { left: cur, right: cur, w: 2, slant: 0, line: 0 };
+}
+function syncUI() {
+  for (const b of document.querySelectorAll("#variants button")) b.classList.toggle("on", compare ? b.dataset.v === "compare" : b.dataset.v === cur);
+  document.body.classList.toggle("cmp", compare); $("split").style.left = (split * 100) + "%";
+}
+function show(v) {
+  if (v === "compare") { compare = !compare; wipe = null; syncUI(); return; }
+  if (compare) { compare = false; cur = v; syncUI(); return; }
+  if (v !== cur) { wipe = { from: cur, to: v, t: 0 }; cur = v; } syncUI();
+}
+for (const b of document.querySelectorAll("#variants button")) b.onclick = () => show(b.dataset.v);
+{ const sp = $("split"); let drag = false;
+  sp.addEventListener("pointerdown", (e) => { drag = true; sp.setPointerCapture(e.pointerId); e.preventDefault(); });
+  sp.addEventListener("pointermove", (e) => { if (drag) { split = Math.min(0.97, Math.max(0.03, e.clientX / innerWidth)); sp.style.left = (split * 100) + "%"; } });
+  sp.addEventListener("pointerup", () => { drag = false; }); sp.addEventListener("pointercancel", () => { drag = false; }); }
+
+// ---------- BGM: one tune in two states (make_bgm.py) - the restored school's organ and piano, and what the ruin remembers of it.  Both loops have
+// the same length and are started together, so going from one variant to the other is a cross-fade inside the same bar, and the split-screen
+// comparison mixes them by how much of the screen each variant has.  Browsers allow sound only after a click: the "BGM" button starts it.
+// Each file is the loop plus a ringing tail; the next pass starts exactly one loop later (bgm.json), so the join cannot be heard.
+let actx = null, bgmOn = false, bgm = null; const BGM_GAIN = { ruin: 0.85, restored: 1.0 }, BGM_MASTER = 0.75;
+// volume slider (kept in this browser): the slider position is squared, so the lower half of the slider gives fine steps at low volume
+let bgmVol = 0.5; try { const v = parseFloat(localStorage.getItem("school_vol")); if (v >= 0 && v <= 1) bgmVol = v; } catch (e) {}
+const volGain = () => BGM_MASTER * bgmVol * bgmVol * 1.3333;      // slider 0.5 (the default) -> 0.25, slider 0.87 -> the 0.75 of the first version, slider 1 -> 1.0 (no clipping)
+const volShow = () => { $("vol").value = bgmVol; $("volv").textContent = Math.round(bgmVol * 100) + " %"; }; volShow();
+$("vol").oninput = (e) => { bgmVol = +e.target.value; volShow(); try { localStorage.setItem("school_vol", String(bgmVol)); } catch (err) {}
+  if (bgm && bgmOn) { const t = actx.currentTime; bgm.master.gain.cancelScheduledValues(t); bgm.master.gain.setTargetAtTime(volGain(), t, 0.05); } };
+function bgmSched() {
+  if (!bgmOn || !bgm) return;
+  for (const k of ["ruin", "restored"]) { const src = actx.createBufferSource(); src.buffer = bgm.buf[k]; src.connect(bgm.gain[k]); src.start(bgm.next); bgm.srcs.push(src); }
+  while (bgm.srcs.length > 6) bgm.srcs.shift();
+  bgm.next += bgm.loop; bgm.passes++; bgm.timer = setTimeout(bgmSched, Math.max(0, (bgm.next - actx.currentTime - 6) * 1000));
+}
+function bgmWeights() {      // share of the ruin's tune: 1 / 0 for one variant, the wipe's progress while switching, the divider's position in the comparison
+  const st = viewState(); let wr;
+  if (st.left === st.right || st.w >= WMAX) wr = st.left === "ruin" ? 1 : 0; else if (st.w <= WMIN) wr = st.right === "ruin" ? 1 : 0;
+  else { const share = Math.min(1, Math.max(0, st.w)); wr = st.left === "ruin" ? share : 1 - share; }
+  return { ruin: Math.sin(wr * Math.PI / 2) * BGM_GAIN.ruin, restored: Math.cos(wr * Math.PI / 2) * BGM_GAIN.restored };      // equal power
+}
+function bgmMix() { if (!bgmOn || !bgm) return; const w = bgmWeights(), t = actx.currentTime; for (const k of ["ruin", "restored"]) bgm.gain[k].gain.setTargetAtTime(w[k], t, 0.3); }
+async function bgmStart() {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)(); await actx.resume();
+    if (!bgm) {
+      const meta = await fetch("bgm.json", { cache: "no-cache" }).then(r => r.json());
+      const [a, b] = await Promise.all(["ruin", "restored"].map(n => fetch("bgm_" + n + ".m4a", { cache: "no-cache" }).then(r => r.arrayBuffer()).then(x => actx.decodeAudioData(x))));
+      bgm = { loop: meta.loop, buf: { ruin: a, restored: b }, gain: {}, master: actx.createGain(), srcs: [], next: 0, timer: 0, passes: 0 };
+      bgm.master.gain.value = 0; bgm.master.connect(actx.destination);
+      for (const k of ["ruin", "restored"]) { bgm.gain[k] = actx.createGain(); bgm.gain[k].gain.value = 0; bgm.gain[k].connect(bgm.master); }
+    }
+    if (!bgmOn) return;                                                    // switched off again while the files were loading
+    const t = actx.currentTime, w = bgmWeights(); for (const k of ["ruin", "restored"]) { bgm.gain[k].gain.cancelScheduledValues(t); bgm.gain[k].gain.setValueAtTime(w[k], t); }
+    bgm.master.gain.cancelScheduledValues(t); bgm.master.gain.setValueAtTime(0, t); bgm.master.gain.linearRampToValueAtTime(volGain(), t + 2.0);
+    bgm.next = t + 0.12; bgm.passes = 0; bgmSched();
+  } catch (e) { console.warn("BGM:", e); bgmOn = false; $("bgm").classList.remove("on"); }
+}
+function bgmStop() {
+  if (!bgm) return; clearTimeout(bgm.timer); const t = actx.currentTime, old = bgm.srcs; bgm.srcs = [];
+  bgm.master.gain.cancelScheduledValues(t); bgm.master.gain.setValueAtTime(bgm.master.gain.value, t); bgm.master.gain.linearRampToValueAtTime(0, t + 0.8);
+  setTimeout(() => { for (const s of old) { try { s.stop(); } catch (e) {} } }, 1000);
+}
+$("bgm").onclick = () => { bgmOn = !bgmOn; $("bgm").classList.toggle("on", bgmOn); if (bgmOn) bgmStart(); else bgmStop(); };
+
+// ---------- camera: fly-through (the camera path of the Blender animation), free view (orbit), walk
+const FR = S.frames, FPS = S.fps, DUR = (FR.length - 1) / FPS; const HFOV = THREE.MathUtils.degToRad(S.hfov || 90);
+let mode = "fly", playing = true, tFly = Math.max(0, Math.min(DUR - 0.01, +(QS.get("t") || 0)));
+function setFov() { camera.fov = Math.min(74, THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(HFOV / 2) / camera.aspect))); camera.updateProjectionMatrix(); }      // the path was made for 90 deg across; tall screens are capped
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _t = new THREE.Vector3(), _d = new THREE.Vector3();
+function flyPose(t) {
+  const f = Math.min(FR.length - 1.001, Math.max(0, t * FPS)), i = Math.floor(f), u = f - i, A = FR[i], B = FR[i + 1];
+  _a.fromArray(A.p).lerp(_b.fromArray(B.p), u); camera.position.copy(_a);
+  _t.fromArray(A.t).lerp(_b.fromArray(B.t), u); camera.up.set(0, 1, 0); camera.lookAt(_t);
+}
+const walk = { yaw: 0, pitch: 0, keys: new Set(), fwd: false, y: 0 };
+function setMode(m) {
+  const prev = mode; mode = m; for (const [id, k] of [["mFly", "fly"], ["mFree", "free"], ["mWalk", "walk"]]) $(id).classList.toggle("on", m === k);
+  document.body.classList.toggle("walk", m === "walk"); controls.enabled = m === "free";
+  if (m === "free" && prev !== "free") { camera.getWorldDirection(_d); controls.target.copy(camera.position).addScaledVector(_d, 6); controls.update(); }
+  if (m === "walk" && prev !== "walk") {
+    camera.getWorldDirection(_d); walk.yaw = Math.atan2(-_d.x, -_d.z); walk.pitch = Math.asin(Math.max(-0.99, Math.min(0.99, _d.y))) * 0.5;
+    if (indoorDepth(camera.position.x, camera.position.y, camera.position.z) < 0 && camera.position.y - groundY(cur, camera.position.x, camera.position.z) > 6) camera.position.set(26, 0, -13);      // from high up: start in the yard
+    walk.y = groundY(cur, camera.position.x, camera.position.z) + 1.5;
+  }
+}
+$("mFly").onclick = () => { setMode("fly"); playing = true; $("play").textContent = "❚❚"; };
+$("mFree").onclick = () => setMode("free"); $("mWalk").onclick = () => setMode("walk");
+$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "❚❚" : "▶"; if (mode !== "fly") setMode("fly"); };
+$("seek").oninput = (e) => { tFly = +e.target.value * DUR; if (mode !== "fly") setMode("fly"); };
+$("hide").onclick = () => { $("ui").classList.toggle("min"); $("hide").textContent = $("ui").classList.contains("min") ? "＋" : "－"; };
+{ let look = null;
+  canvas.addEventListener("pointerdown", (e) => { if (mode === "fly") setMode("free"); else if (mode === "walk") { look = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); } });
+  canvas.addEventListener("pointermove", (e) => { if (mode === "walk" && look) { walk.yaw -= (e.clientX - look.x) * 0.0045; walk.pitch = Math.max(-1.3, Math.min(1.3, walk.pitch - (e.clientY - look.y) * 0.0045)); look = { x: e.clientX, y: e.clientY }; } });
+  for (const ev of ["pointerup", "pointercancel"]) canvas.addEventListener(ev, () => { look = null; }); }
+addEventListener("keydown", (e) => { if (e.target.tagName === "INPUT" && e.target.type !== "checkbox" && e.target.type !== "range") return;
+  if (e.key === "1") show("ruin"); else if (e.key === "2") show("restored"); else if (e.key === "3") show("compare");
+  walk.keys.add(e.code); if (mode === "walk" && /^Arrow|Space/.test(e.code)) e.preventDefault(); });
+addEventListener("keyup", (e) => walk.keys.delete(e.code)); addEventListener("blur", () => walk.keys.clear());
+for (const [ev, on] of [["pointerdown", true], ["pointerup", false], ["pointercancel", false], ["pointerleave", false]]) $("fwd").addEventListener(ev, (e) => { walk.fwd = on; e.preventDefault(); });
+function walkStep(dt) {
+  const K = walk.keys, f = (K.has("KeyW") || K.has("ArrowUp") || walk.fwd ? 1 : 0) - (K.has("KeyS") || K.has("ArrowDown") ? 1 : 0), s = (K.has("KeyD") || K.has("ArrowRight") ? 1 : 0) - (K.has("KeyA") || K.has("ArrowLeft") ? 1 : 0);
+  const sp = (K.has("ShiftLeft") || K.has("ShiftRight") ? 4.5 : 2.0) * dt, sy = Math.sin(walk.yaw), cy = Math.cos(walk.yaw);
+  camera.position.x += (-sy * f + cy * s) * sp; camera.position.z += (-cy * f - sy * s) * sp;
+  const gy = groundY(compare ? "ruin" : cur, camera.position.x, camera.position.z) + 1.5; walk.y += (gy - walk.y) * Math.min(1, dt * 8); camera.position.y = walk.y;
+  camera.rotation.set(walk.pitch, walk.yaw, 0, "YXZ");
+}
+let showPetals = true, showVeg = true;
+$("cShadow").onchange = (e) => { sun.castShadow = e.target.checked; };
+$("cPetals").onchange = (e) => { showPetals = e.target.checked; };
+$("cVeg").onchange = (e) => { showVeg = e.target.checked; };
+const QN = { ja: { low: "画質: 軽量", mid: "画質: 標準", high: "画質: 高" }, en: { low: "Quality: light", mid: "Quality: medium", high: "Quality: high" } };
+const qLabel = () => { $("qual").textContent = QN[window.__lang === "en" ? "en" : "ja"][qName]; }; qLabel(); $("lang").addEventListener("click", qLabel);
+$("qual").onclick = () => { const nx = { low: "mid", mid: "high", high: "low" }[qName]; try { localStorage.setItem("school_q", nx); } catch (e) {} const u = new URL(location.href); u.searchParams.set("q", nx); location.href = u.toString(); };
+addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; renderer.setSize(innerWidth, innerHeight); setFov(); makeRT(); });
+
+// ---------- drawing: each variant on screen is drawn into its own HDR target with a depth texture; one full-screen pass picks the variant per
+// pixel (left / right of the divider), adds screen-space ambient occlusion from the depth alone and tone-maps.
+const rts = [null, null]; const rtSize = new THREE.Vector2(); let hdr = true;
+function makeRT() {
+  renderer.getDrawingBufferSize(rtSize); hdr = renderer.extensions.has("EXT_color_buffer_half_float") || renderer.extensions.has("EXT_color_buffer_float");      // some phones cannot render to float targets
+  for (let i = 0; i < 2; i++) {
+    if (rts[i]) { rts[i].depthTexture.dispose(); rts[i].dispose(); }
+    rts[i] = new THREE.WebGLRenderTarget(rtSize.x, rtSize.y, { type: hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: Q.msaa });
+    rts[i].depthTexture = new THREE.DepthTexture(rtSize.x, rtSize.y); rts[i].depthTexture.type = THREE.UnsignedIntType;
+  }
+}
+const postMat = new THREE.ShaderMaterial({
+  uniforms: { tA: { value: null }, dA: { value: null }, tB: { value: null }, dB: { value: null }, uW: { value: 2 }, uSlant: { value: 0 }, uLine: { value: 0 },
+              uProj: { value: new THREE.Matrix4() }, uInvProj: { value: new THREE.Matrix4() }, uRes: { value: new THREE.Vector2() }, uAO: { value: 0.85 }, uRadius: { value: 0.5 } },
+  vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+  fragmentShader: `
+    uniform sampler2D tA, dA, tB, dB; uniform mat4 uProj, uInvProj; uniform vec2 uRes; uniform float uAO, uRadius, uW, uSlant, uLine; varying vec2 vUv;
+    float gL;      // 1 = left variant.  (Both targets are sampled and mixed: choosing the sampler with a condition inside the loop broke the D3D compiler.)
+    float dep(vec2 uv) { return mix(textureLod(dB, uv, 0.0).x, textureLod(dA, uv, 0.0).x, gL); }
+    vec3 vpos(vec2 uv) { float d = dep(uv); vec4 v = uInvProj * vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0); return v.xyz / v.w; }
+    float ign(vec2 q) { return fract(52.9829189 * fract(dot(q, vec2(0.06711056, 0.00583715)))); }
+    void main() {
+      float s = vUv.x + (vUv.y - 0.5) * uSlant; gL = s < uW ? 1.0 : 0.0;
+      vec3 col = mix(textureLod(tB, vUv, 0.0).rgb, textureLod(tA, vUv, 0.0).rgb, gL); float d = dep(vUv); float ao = 1.0;
+      if (d < 0.99995 && uAO > 0.0) {
+        vec3 p = vpos(vUv); vec3 n = normalize(cross(dFdx(p), dFdy(p)));
+        float rpx = clamp(uRadius * uProj[1][1] * 0.5 * uRes.y / -p.z, 3.0, 80.0);
+        float a0 = ign(gl_FragCoord.xy) * 6.2831853, occ = 0.0;
+        for (int i = 0; i < 14; i++) {
+          float fi = (float(i) + 0.5) / 14.0; float a = a0 + float(i) * 2.3999632; vec2 uv2 = vUv + vec2(cos(a), sin(a)) * sqrt(fi) * rpx / uRes;
+          vec3 v = vpos(uv2) - p; float l = length(v);
+          occ += max(0.0, dot(n, v) / (l + 1e-4) - 0.10) * smoothstep(uRadius * 2.2, uRadius * 0.6, l);
+        }
+        ao = 1.0 - uAO * clamp(occ / 14.0 * 2.4, 0.0, 1.0);
+        ao = mix(ao, 1.0, smoothstep(40.0, 90.0, -p.z));
+      }
+      col *= ao;
+      col = mix(col, vec3(2.2), uLine * (1.0 - smoothstep(0.8, 2.2, abs(s - uW) * uRes.x)));      // the divider
+      gl_FragColor = vec4(col, 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`, depthTest: false, depthWrite: false });
+const postScene = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat)); postScene.children[0].frustumCulled = false;
+let useAO = Q.ao; $("cAO").checked = useAO; $("cAO").onchange = (e) => { useAO = e.target.checked; };
+function drawVariant(v, rt) {
+  for (const k in V) V[k].group.visible = k === v;
+  const vv = V[v]; vv.vegGroup.visible = showVeg;
+  if (showVeg) for (const ch of vv.chunks) {
+    const d = Math.hypot(ch.centre.x - camera.position.x, ch.centre.z - camera.position.z) - CELL * 0.7, n0 = d < Q.near && ch.lod0.length > 0;
+    for (const m of ch.lod0) m.visible = n0; for (const m of ch.lod1) m.visible = !n0;
+    for (const m of ch.ftrunk) m.visible = d < FOREST_TRUNKS;      // trunks of the hill forest only where one can see under the crowns (they are 3 M triangles in all)
+  }
+  petals.visible = showPetals && v === "restored" && PF.length > 0; fallen.visible = showPetals && v === "restored" && fallen.count > 0; applyLook(v);
+  renderer.setRenderTarget(rt); renderer.render(scene, camera);
+}
+function renderFrame() {
+  if (!rts[0]) makeRT();
+  const st = viewState(), both = st.left !== st.right && st.w > WMIN && st.w < WMAX, onlyLeft = !both && st.w >= 0.5;
+  if (both || onlyLeft) drawVariant(st.left, rts[0]);
+  if (both || !onlyLeft) drawVariant(st.right, rts[1]);
+  renderer.setRenderTarget(null);
+  const u = postMat.uniforms, A = both || onlyLeft ? rts[0] : rts[1], B = both || !onlyLeft ? rts[1] : rts[0];
+  u.tA.value = A.texture; u.dA.value = A.depthTexture; u.tB.value = B.texture; u.dB.value = B.depthTexture; u.uW.value = st.w; u.uSlant.value = st.slant; u.uLine.value = both ? st.line : 0;
+  u.uAO.value = useAO ? 0.85 : 0; u.uProj.value.copy(camera.projectionMatrix); u.uInvProj.value.copy(camera.projectionMatrixInverse); u.uRes.value.copy(rtSize);
+  renderer.render(postScene, postCam);
+}
+
+// ---------- loop
+camera.aspect = innerWidth / innerHeight; setFov(); flyPose(tFly);
+const clock = new THREE.Clock(); let acc = 0, nfr = 0, tAll = 0, expo = 1.0; const EXP_IN = 2.3;
+function update(dt) {
+  tAll += dt;
+  if (wipe) { wipe.t += dt; if (wipe.t >= WIPE_T) wipe = null; }
+  if (mode === "fly") { if (playing) tFly = (tFly + dt) % DUR; flyPose(tFly); $("seek").value = tFly / DUR; $("time").textContent = tFly.toFixed(1) + " s"; }
+  else if (mode === "free") controls.update(); else walkStep(dt);
+  // the shadow box follows the view (snapped to texels so that it does not shimmer)
+  camera.getWorldDirection(_d); const c = _a.copy(camera.position).addScaledVector(_d, 9); const texel = 2 * SH / Q.shadow;
+  c.x = Math.round(c.x / texel) * texel; c.z = Math.round(c.z / texel) * texel; c.y = 1.5;
+  sun.target.position.copy(c); sun.position.copy(c).addScaledVector(toSun, 200);
+  // exposure: the eye adapts indoors (the rooms get only a fraction of the sky light)
+  const din = indoorDepth(camera.position.x, camera.position.y, camera.position.z), target = 1 + (EXP_IN - 1) * Math.min(1, Math.max(0, (din + 0.3) / 1.8));
+  expo += (target - expo) * Math.min(1, dt * 2.2); renderer.toneMappingExposure = expo;
+  if (PF.length && showPetals) updatePetals(tAll);
+  bgmMix();
+}
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.1); renderer.info.reset(); update(dt); renderFrame();
+  nfr++; acc += dt; if (acc > 0.5) { $("fps").textContent = (nfr / acc).toFixed(0) + " fps · " + renderer.info.render.triangles.toLocaleString() + " tris"; acc = 0; nfr = 0; }
+  requestAnimationFrame(frame);
+}
+function setEnv(x) { for (const m of allMats) if ("envMapIntensity" in m) m.envMapIntensity = x; }
+setEnv(0.5);
+// debug / tuning hook (console): __school.seek(t), __school.show("restored"), __school.draw() draws one frame without the animation loop
+window.__school = { THREE, scene, renderer, camera, controls, sun, hemi, V, S, PM, LOOK, LIGHTING, QUALITY, show, setMode, env: setEnv, petals, fallen, PF, WIND, groundY, terrainY,
+  seek: (t) => { tFly = t; playing = false; $("play").textContent = "▶"; if (mode !== "fly") setMode("fly"); },
+  pose: (p, t) => { setMode("free"); camera.position.set(...p); controls.target.set(...t); controls.update(); },
+  draw: (dt = 0.016, n = 1) => { for (let i = 0; i < n; i++) { renderer.info.reset(); update(dt); renderFrame(); } return { expo, tFly, mode, cur, compare, tris: renderer.info.render.triangles, calls: renderer.info.render.calls }; },
+  state: () => ({ expo, tFly, mode, cur, compare, split, wipe: !!wipe, petals: PF.length, fallen: fallen.count }),
+  bgm: () => bgm ? { on: bgmOn, ctx: actx.state, loop: bgm.loop, dur: [bgm.buf.ruin.duration, bgm.buf.restored.duration], gain: [bgm.gain.ruin.gain.value, bgm.gain.restored.gain.value], master: bgm.master.gain.value, vol: bgmVol, passes: bgm.passes, next: bgm.next - actx.currentTime, target: bgmWeights() } : { on: bgmOn, loaded: false } };
+syncUI();
+await step(4);
+// compile the shaders and draw both variants once while the loading screen is still up
+try { for (const k in V) V[k].group.visible = true; applyLook("ruin");
+  if (renderer.compileAsync) await Promise.race([renderer.compileAsync(scene, camera), new Promise(r => setTimeout(r, 30000))]); else renderer.compile(scene, camera); } catch (e) { console.warn("compile:", e); }
+try { const keep = [cur, compare]; compare = true; renderFrame(); compare = keep[1]; cur = keep[0]; renderFrame(); } catch (e) { console.warn("first frame:", e); }
+console.info("[school] ready", JSON.stringify({ quality: qName, hdr, petals: PF.length, missing: { ruin: V.ruin.missing, restored: V.restored.missing } }));
+$("load").style.opacity = 0; setTimeout(() => $("load").remove(), 700);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html><meta charset="utf-8"><title>shader check</title>
+<!--
+Find the material whose shader the browser's compiler cannot take (Windows: ANGLE / D3D - an internal compiler error loses the WebGL
+context on the first draw, and with dozens of materials compiling at once the page does not tell which one it was).
+
+Use: copy this file next to the page's material module (the public folder), serve the folder, open
+    http://<any-name>.localhost:<port>/shader_check.html?mod=./proc.js[&three=0.160.0][&only=<text>][&skip=a,b]
+The material module must export   async function shaderCheckList()  ->  [[name, () => THREE.Material], ...]
+(every material the page makes; it loads whatever data it needs itself).  Materials with the same customProgramCacheKey() are drawn once.
+
+Reading the result (on the page, in the console as "[dbg] ...", and in window.__log):
+    "ALL DRAWN: n programs" and no line with "LOG:"  -> every shader compiled cleanly
+    a line with "LOG: ..."                           -> that program drew, but the compiler complained (on a bigger page it may fail)
+    "CONTEXT LOST at <name>"                         -> that material is the one
+After a context loss the browser blocks WebGL for this origin: open the page again under another name (b.localhost, c.localhost ...).
+-->
+<script>
+  document.write('<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@' + (new URLSearchParams(location.search).get("three") || "0.160.0") + '/build/three.module.js" } }<\/script>');
+</script>
+<canvas id="c" width="256" height="256"></canvas><pre id="o"></pre>
+<script type="module">
+import * as THREE from "three";
+const QS = new URLSearchParams(location.search); const out = document.getElementById("o"); window.__log = [];
+const say = (s) => { window.__log.push(s); out.textContent += s + "\n"; console.info("[dbg] " + s); };
+try {
+  const mod = await import(QS.get("mod") || "./proc.js");
+  if (typeof mod.shaderCheckList !== "function") throw new Error("the module does not export shaderCheckList()");
+  const list = await mod.shaderCheckList();
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c") }); const gl = renderer.getContext(); renderer.shadowMap.enabled = QS.get("shadow") !== "0";
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(50, 1, 0.1, 100); cam.position.set(2, 2, 3); cam.lookAt(0, 0.5, 0);
+  const sun = new THREE.DirectionalLight(0xffffff, 3); sun.position.set(3, 5, 2); sun.castShadow = true; scene.add(sun, new THREE.HemisphereLight(0xffffff, 0x444444, 0.5));
+  const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5).toNonIndexed(); geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3).fill(0.5), 3));
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial()); mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
+  const px = new Uint8Array(4), only = QS.get("only"), skip = (QS.get("skip") || "").split(","), seen = new Set(), bad = [], logged = [];
+  for (const [name, make] of list) {
+    if (only && !name.includes(only)) continue; if (skip.includes(name) || skip.includes(name.split(":").pop())) continue;
+    const m = make(); const key = m.customProgramCacheKey ? m.customProgramCacheKey() + "|" + JSON.stringify(m.defines || {}) : name; if (seen.has(key) && !only) continue; seen.add(key);
+    say("draw " + name); mesh.material = m;
+    renderer.render(scene, cam); gl.readPixels(128, 128, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); const err = gl.getError();      // readPixels forces the compile now
+    if (gl.isContextLost()) { say("CONTEXT LOST at " + name); bad.push(name); break; }
+    const dg = renderer.info.programs.at(-1)?.diagnostics; const log = dg && dg.programLog ? dg.programLog.slice(0, 400) : ""; if (log) logged.push(name);
+    say("  ok rgba " + [...px].join(",") + (err ? " glError " + err : "") + (log ? "  LOG: " + log : ""));
+    await new Promise(r => setTimeout(r, 0));
+  }
+  say(bad.length ? "FAILED: " + bad.join(", ") : "ALL DRAWN: " + seen.size + " programs" + (logged.length ? "; compiler complaints in: " + logged.join(", ") : ""));
+} catch (e) { say("ERROR: " + e.message); }
+window.__done = true;
+</script>

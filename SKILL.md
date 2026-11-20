@@ -1,6 +1,6 @@
 ---
 name: ai-wide-area-modeling
-description: 撮影データ（写真とカメラ姿勢、SfM / dense 点群、任意で LichtFeld Studio (LFS) の 3D Gaussian Splatting）を測りながら、広い範囲の実在シーン（街路・インフラ・寺社・ダムなど）を Blender MCP で軽量な形状モデルに起こす汎用の手順と道具。COLMAP 形式のカメラ姿勢・撮影写真・点群を参照する。LFS の MCP からのデータの取り方、座標系とスケールの決め方、写真・3DGS・Blender を同じ視点で並べた差分確認、撮影写真（cubemap の面など）と同じ姿勢・画角で最終レンダーを描いて差分を原因まで掘り生成スクリプトを直す仕上げの往復（ブラッシュアップ）、点群とモデルの 3D 距離の確認、細い物の三角測量、できたモデルの Unreal Engine への移行（UE MCP、材質・植物・歩行）を含む。屋外の街並み・インフラ・建物・室内・物体など、シーンの種類を問わない。ユーザーが「3DGS をモデリング」「LFS の視点から Blender で作って」「ガウシアンスプラットからメッシュ／CAD 風モデルに」「COLMAP / SfM の結果を Blender に」「点群からモデルを起こして」「モデルと 3DGS（写真）のずれを確認して」「写真と同じ視点でレンダリングして比較して」「比較してずれを直して」「Blender のモデルを UE に持っていって」などと言ったら、3DGS・COLMAP・Blender・LichtFeld のいずれかが話に出ている限り、明示されなくてもこのスキルを使うこと。
+description: 撮影データ（写真とカメラ姿勢、SfM / dense 点群、任意で LichtFeld Studio (LFS) の 3D Gaussian Splatting）を測りながら、広い範囲の実在シーン（街路・インフラ・寺社・ダムなど）を Blender MCP で軽量な形状モデルに起こす汎用の手順と道具。COLMAP 形式のカメラ姿勢・撮影写真・点群を参照する。LFS の MCP からのデータの取り方、座標系とスケールの決め方、写真・3DGS・Blender を同じ視点で並べた差分確認、撮影写真（cubemap の面など）と同じ姿勢・画角で最終レンダーを描いて差分を原因まで掘り生成スクリプトを直す仕上げの往復（ブラッシュアップ）、点群とモデルの 3D 距離の確認、細い物の三角測量、できたモデルの Unreal Engine への移行（UE MCP、材質・植物・歩行）と、Three.js でブラウザに公開する手順（glb 書き出し、式で描く材質、別案の切り替え、スマホ対応）を含む。屋外の街並み・インフラ・建物・室内・物体など、シーンの種類を問わない。ユーザーが「3DGS をモデリング」「LFS の視点から Blender で作って」「ガウシアンスプラットからメッシュ／CAD 風モデルに」「COLMAP / SfM の結果を Blender に」「点群からモデルを起こして」「モデルと 3DGS（写真）のずれを確認して」「写真と同じ視点でレンダリングして比較して」「比較してずれを直して」「Blender のモデルを UE に持っていって」「Three.js / ブラウザで見られるようにして」などと言ったら、3DGS・COLMAP・Blender・LichtFeld のいずれかが話に出ている限り、明示されなくてもこのスキルを使うこと。
 ---
 
 # AI Wide Area Modeling（撮影データ → Blender モデリング）
@@ -44,6 +44,7 @@ Python は numpy と Pillow を使います（環境の落とし穴は knowledge
 | `unreal/ue_niagara_fall.py` | UE 5.9: 花びら・落ち葉・雪など、ゆっくり落ちる粒の Niagara システムを作って置く（量・風・乱流は JSON） |
 | `blender/bl_camera_json.py` / `unreal/ue_camera_seq.py` | カメラワークを Blender から UE へ: コマごとの位置と注視点の JSON → Level Sequence → Movie Render Queue で連番 |
 | `frames_check.py` | 連番（Blender・UE）の欠け・単色のコマ（めり込み）・飛びの検査と一覧画像 |
+| `threejs/shader_check.html` | Three.js: 材質を 1 つずつ描き、ブラウザのシェーダーコンパイラ（Windows の D3D）が落ちる材質を探す。使い方は [references/threejs.md](references/threejs.md) |
 | `blender/bl_bake_queue.py` | Blender MCP の制限時間を超える処理を、Blender の中のタイマーで順に実行する |
 | `blender/bl_coplanar.py` | Z ファイティングの候補（同じ向きで同じ平面に重なる面）を全メッシュから探す。生成スクリプトを直したら毎回かける |
 
@@ -82,6 +83,7 @@ python setup_project.py <project_dir> --shared <共有フォルダ> [--scale m/u
   - 高架・道路・街路（経路に沿った長いシーン）: [recipes/viaduct_street/RECIPE.md](recipes/viaduct_street/RECIPE.md)
   - 寺社の門・境内・木造の伝統建築（楼門、本堂の流れ向拝、鐘楼、庫裏、入母屋屋根、組物、生垣・木）: [recipes/temple_gate/RECIPE.md](recipes/temple_gate/RECIPE.md)
   - ダム・洪水吐・減勢池・ダム湖と川・山地の地形（ドローン撮影、国土地理院 DEM との当てはめ、UE の水と森）: [recipes/dam_spillway/RECIPE.md](recipes/dam_spillway/RECIPE.md)
+  - 木造校舎など、室内に入れる木造の建物（柱間ごとの壁、現況の廃墟と想像の復元の 2 状態、UE 版、Three.js 版の切り替え・花びら・BGM）: [recipes/wooden_school/RECIPE.md](recipes/wooden_school/RECIPE.md)
 
 ### 3. 測る
 - **寸法と位置は、SfM 点群の断面で読みます**（`plot_points.py --box=...` で薄い板を切る。床から 1 m の高さの平面図、柱を通る縦断面など）。3DGS の点（`export_points.py 3dgs`）は密ですが、フローターが混ざります。
@@ -131,8 +133,9 @@ python cmp_review.py <dir> sheets                               # 修正前後�
 - 結果の画像（比較シート、ユーザーの視点、全体の俯瞰）をユーザーに送り、どこが違うかを聞きます。
 - ユーザーの指摘は、たいてい一般的な規則（「二つの床版は高さが違う」「柱の根元は車道に置かない」）です。その場所だけ直さず、規則として生成スクリプトに入れます。**このスキルにも書き足します**（シーンに依存しない知識は knowledge.md、シーンの種類に固有の物はレシピ）。
 
-### 7. ゲームエンジンへ移す（求められたら）
+### 7. ゲームエンジン・ブラウザへ移す（求められたら）
 - Unreal Engine へは [references/unreal.md](references/unreal.md) の手順で移します（`bl_export_groups.py` → `unreal/ue_port.py` → `ue_surfaces.py` → `ue_vegetation.py`）。
+- ブラウザで見せる（Three.js）場合は [references/threejs.md](references/threejs.md) を読みます（glb の書き出し、式で描く材質、葉のカード、SSAO、季節・BGM・言語の切り替え、別案（現状と復元など）の切り替えと左右比較、室内の明るさ、Windows のブラウザで落ちるシェーダーの書き方、読み込み画面、スマホ、公開フォルダの分け方）。
 - UE 5.9 以降はツール名と単位の扱いが違います（`ue_mcp.py toolsets` に `PythonScriptingTools` があれば 5.9）。unreal.md の「UE 5.9 での違い」を先に読み、`unreal/ue_py.py` と 5.9 用の道具（撮影・歩行確認・Niagara・カメラワーク）を使います。
 - 移す前に、Blender で面の向きと物体の変換を確かめます（UE は裏面を描かず、Blender は両面を描くので、裏返りに気づけない）。
 - 材質に学習写真を焼き込まず、植物は Blender で作った物を使わずに、本物のアセットに置き換えます（どちらも実例での評価）。素材のダウンロードや、プロジェクト設定の変更・エディタの再起動は、了解を得てから行います。

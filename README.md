@@ -14,6 +14,7 @@ It does not paste photos on as textures. The agent reads dimensions from point-c
 - Compares photo | 3DGS | Blender from the same viewpoint, measures the 3D distance between cloud and model, and checks the scale
 - Finishing loop: renders the final look with the photo's pose and lens, traces each difference to its cause and fixes it
 - Ports the finished model to Unreal Engine (optional)
+- Publishes it as a Three.js page for the browser (optional)
 
 ## Requirements
 
@@ -57,9 +58,9 @@ Then ask Claude Code, for example:
 | Path | Contents |
 |---|---|
 | `SKILL.md` | the procedure itself (what the agent reads first) |
-| `references/` | how far to trust each kind of data, typical failures, scale clues, verification methods, notes on LichtFeld and Unreal |
-| `scripts/` | general tools (frame setup, point export and plots, photo selection, triangulation, comparison sheets, Blender / Unreal scripts) |
-| `recipes/` | recipes and example settings per scene type (elevated road and street, temple gate and grounds, dam and spillway) |
+| `references/` | how far to trust each kind of data, typical failures, scale clues, verification methods, notes on LichtFeld, Unreal and Three.js |
+| `scripts/` | general tools (frame setup, point export and plots, photo selection, triangulation, comparison sheets, Blender / Unreal scripts, a shader check page for Three.js) |
+| `recipes/` | recipes and example settings per scene type (elevated road and street, temple gate and grounds, dam and spillway, wooden school: ruin and restoration with a Three.js page) |
 
 ## Environment variables
 
